@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Modbus Poll",
+    "description": "Connect to a Modbus TCP server from a sidebar panel, read holding or input registers, and write single holding registers."
+  }
+}

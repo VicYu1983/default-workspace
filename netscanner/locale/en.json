@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Network Scanner",
+    "description": "Scan a configurable IPv4 segment from the sidebar: find responsive hosts, open TCP ports, hostnames and MAC addresses."
+  }
+}

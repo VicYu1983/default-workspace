@@ -1,0 +1,31 @@
+{
+  "name": "@local/dsh-plugin-netscanner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A network scanner panel plus a net_scan agent tool: set a CIDR or address range, discover responsive hosts, open TCP ports, hostnames and MAC addresses.",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "scanner.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  }
+}

@@ -1,0 +1,3 @@
+- insert:
+    - id: modbus-poll
+      name: '@local/dsh-plugin-modbus-poll'
