@@ -19,7 +19,7 @@ window.__ModuleLoader__.load({
     const DICTIONARIES = {
       en: {
         'nsc.title': 'Network Scanner',
-        'nsc.subtitle': 'Discover responsive hosts and open ports on a network segment.',
+        'nsc.subtitle': 'Discover hosts and open ports with TCP probes and the ARP cache.',
         'nsc.target': 'Scan target',
         'nsc.targetPlaceholder': '192.168.1.0/24 or 192.168.1.10-50',
         'nsc.targetHint': 'CIDR, address range, wildcard (192.168.1.*) or a single IP.',
@@ -65,6 +65,10 @@ window.__ModuleLoader__.load({
         'nsc.colLatency': 'Latency',
         'nsc.online': 'Online',
         'nsc.noPorts': 'No open ports',
+        'nsc.viaArp': 'Found from the ARP cache',
+        'nsc.arpTag': 'ARP',
+        'nsc.arpPhase': 'Checking ARP…',
+        'nsc.timeoutHint': 'Wi-Fi devices may need 800–1500 ms.',
         'nsc.emptyIdle': 'Choose a target and start a scan.',
         'nsc.emptyRunning': 'Scanning… responsive hosts will appear here.',
         'nsc.emptyDone': 'No responsive hosts were found on this segment.',
@@ -80,7 +84,7 @@ window.__ModuleLoader__.load({
       },
       zh: {
         'nsc.title': '網段掃描器',
-        'nsc.subtitle': '掃描指定網段，找出有回應的主機與開放的連接埠。',
+        'nsc.subtitle': '以 TCP 與 ARP 探索網段，找出主機與開放的連接埠。',
         'nsc.target': '掃描網段',
         'nsc.targetPlaceholder': '192.168.1.0/24 或 192.168.1.10-50',
         'nsc.targetHint': '支援 CIDR、起訖範圍、萬用字元（192.168.1.*）或單一 IP。',
@@ -126,6 +130,10 @@ window.__ModuleLoader__.load({
         'nsc.colLatency': '延遲',
         'nsc.online': '上線',
         'nsc.noPorts': '無開放埠',
+        'nsc.viaArp': '由 ARP 快取發現',
+        'nsc.arpTag': 'ARP',
+        'nsc.arpPhase': '檢查 ARP…',
+        'nsc.timeoutHint': 'Wi-Fi 裝置建議 800–1500 毫秒。',
         'nsc.emptyIdle': '設定網段後按「開始掃描」。',
         'nsc.emptyRunning': '掃描中…有回應的主機會陸續出現。',
         'nsc.emptyDone': '這個網段沒有找到有回應的主機。',
@@ -211,6 +219,8 @@ window.__ModuleLoader__.load({
 .nsc-strong { font-weight:600; }
 .nsc-dim { color:var(--dsw-alias-label-secondary); }
 .nsc-state-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--dsw-alias-state-success-primary); }
+.nsc-state-dot.is-arp { background:var(--dsw-alias-state-warn-primary); }
+.nsc-arp-tag { display:inline-flex; align-items:center; height:16px; margin-left:6px; padding:0 5px; border-radius:4px; border:1px solid var(--dsw-alias-border-l1); background:var(--dsw-alias-bg-layer-2); color:var(--dsw-alias-label-secondary); font-family:inherit; font-size:10px; font-weight:400; vertical-align:1px; }
 .nsc-portlist { display:flex; flex-wrap:wrap; gap:4px; }
 .nsc-port { display:inline-flex; align-items:center; height:18px; padding:0 6px; border-radius:4px; background:var(--dsw-alias-bg-layer-2); border:1px solid var(--dsw-alias-border-l1); font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:11px; }
 .nsc-empty { margin:0; padding:18px 10px; font-size:12px; color:var(--dsw-alias-label-secondary); }
@@ -235,7 +245,7 @@ window.__ModuleLoader__.load({
       cidr: '',
       preset: 'standard',
       portsText: '',
-      timeoutMs: '450',
+      timeoutMs: '700',
       concurrency: '48',
       resolveNames: true,
     }
@@ -379,7 +389,12 @@ window.__ModuleLoader__.load({
           cidr: typeof saved.cidr === 'string' ? saved.cidr : fallback.cidr,
           preset: PRESETS.some((preset) => preset.id === saved.preset) ? saved.preset : fallback.preset,
           portsText: typeof saved.portsText === 'string' ? saved.portsText : fallback.portsText,
-          timeoutMs: typeof saved.timeoutMs === 'string' ? saved.timeoutMs : fallback.timeoutMs,
+          // 450 ms was the old default and is too aggressive for sleeping Wi-Fi
+          // devices; upgrade that saved default once, but keep any other choice.
+          timeoutMs:
+            typeof saved.timeoutMs === 'string' && saved.timeoutMs !== '450'
+              ? saved.timeoutMs
+              : fallback.timeoutMs,
           concurrency: typeof saved.concurrency === 'string' ? saved.concurrency : fallback.concurrency,
           resolveNames: saved.resolveNames !== false,
         }
@@ -403,7 +418,7 @@ window.__ModuleLoader__.load({
     }
 
     function downloadCsv(rows, target) {
-      const header = ['IP', 'Hostname', 'MAC', 'Open ports', 'Latency (ms)']
+      const header = ['IP', 'Hostname', 'MAC', 'Open ports', 'Latency (ms)', 'Discovered by']
       const lines = [header]
       for (const row of rows) {
         lines.push([
@@ -411,7 +426,8 @@ window.__ModuleLoader__.load({
           row.hostname || '',
           row.mac || '',
           row.ports.join(' '),
-          row.latencyMs,
+          row.via === 'arp' ? '' : row.latencyMs,
+          row.via,
         ])
       }
       const text = '\ufeff' + lines.map((line) => line.map(csvCell).join(',')).join('\r\n')
@@ -432,6 +448,7 @@ window.__ModuleLoader__.load({
       if (!scan || !scan.phase || scan.phase === 'idle') return 'nsc.idle'
       if (scan.running) {
         if (scan.phase === 'resolving') return 'nsc.resolving'
+        if (scan.phase === 'arp') return 'nsc.arpPhase'
         if (scan.phase === 'stopping') return 'nsc.stoppingPhase'
         return 'nsc.scanning'
       }
@@ -769,6 +786,7 @@ window.__ModuleLoader__.load({
               disabled: running,
               onChange: (event) => setField('timeoutMs', event.target.value),
             }),
+            h('span', { className: 'nsc-hint' }, t('nsc.timeoutHint')),
           ),
           field(
             t('nsc.concurrency'),
@@ -969,12 +987,23 @@ window.__ModuleLoader__.load({
                 'td',
                 null,
                 h('span', {
-                  className: 'nsc-state-dot',
-                  title: t('nsc.online'),
-                  'aria-label': t('nsc.online'),
+                  className: 'nsc-state-dot' + (row.via === 'arp' ? ' is-arp' : ''),
+                  title: row.via === 'arp' ? t('nsc.viaArp') : t('nsc.online'),
+                  'aria-label': row.via === 'arp' ? t('nsc.viaArp') : t('nsc.online'),
                 }),
               ),
-              h('td', { className: 'nsc-mono nsc-strong' }, row.ip),
+              h(
+                'td',
+                { className: 'nsc-mono nsc-strong' },
+                row.ip,
+                row.via === 'arp'
+                  ? h(
+                      'span',
+                      { className: 'nsc-arp-tag', title: t('nsc.viaArp') },
+                      t('nsc.arpTag'),
+                    )
+                  : null,
+              ),
               h(
                 'td',
                 { className: row.hostname ? '' : 'nsc-dim' },
@@ -1001,7 +1030,9 @@ window.__ModuleLoader__.load({
               h(
                 'td',
                 { className: 'nsc-mono nsc-dim nsc-col-latency' },
-                String(row.latencyMs) + ' ' + t('nsc.latencyMs'),
+                row.via === 'arp'
+                  ? t('nsc.hostUnknown')
+                  : String(row.latencyMs) + ' ' + t('nsc.latencyMs'),
               ),
             ),
           ),

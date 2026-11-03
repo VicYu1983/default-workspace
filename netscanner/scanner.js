@@ -5,7 +5,8 @@
  * privileges: a TCP connect that either completes (open port) or is refused
  * (the host answered with RST) proves the address is reachable. Open ports are
  * collected from the same probes, reverse DNS supplies names, and the operating
- * system's ARP table supplies MAC addresses for the local segment.
+ * system's ARP table supplies MAC addresses plus live neighbours that never
+ * answered a TCP probe (phones, TVs and IoT devices with a silent firewall).
  *
  * One scan runs at a time. Every socket is tracked so a stop request can abort
  * pending connects immediately instead of waiting out their timeouts.
@@ -21,7 +22,7 @@ const execFileAsync = promisify(execFile)
 export const MAX_HOSTS = 4096
 export const MAX_PORTS = 32
 export const MAX_CONCURRENCY = 128
-export const DEFAULT_TIMEOUT_MS = 450
+export const DEFAULT_TIMEOUT_MS = 700
 export const DEFAULT_CONCURRENCY = 48
 export const DEFAULT_PORTS = Object.freeze([21, 22, 23, 80, 135, 139, 443, 445, 3389, 8080])
 
@@ -335,6 +336,7 @@ export class NetworkScanner {
     this.activeSockets = new Set()
     this.sequence = 0
     this.maxHosts = options.maxHosts ?? MAX_HOSTS
+    this.readArpTable = options.readArpTable ?? readArpTable
   }
 
   get running() {
@@ -422,6 +424,7 @@ export class NetworkScanner {
         mac: row.mac,
         ports: [...row.ports],
         latencyMs: row.latencyMs,
+        via: row.via,
       }))
     return {
       running: scan.running,
@@ -447,6 +450,7 @@ export class NetworkScanner {
         scan.phase = 'stopped'
         return
       }
+      scan.phase = 'arp'
       await this.attachArp(scan)
       if (scan.aborted) {
         scan.phase = 'stopped'
@@ -501,6 +505,7 @@ export class NetworkScanner {
       mac: null,
       ports: openPorts,
       latencyMs: Math.max(0, Math.min(...responses.map((outcome) => outcome.latencyMs))),
+      via: 'tcp',
     }
   }
 
@@ -537,13 +542,38 @@ export class NetworkScanner {
     })
   }
 
+  /**
+   * Merge the OS ARP table into the scan.
+   *
+   * Every TCP attempt first resolves the target's MAC through ARP, so a live
+   * device on the same L2 segment leaves a cache entry even when its firewall
+   * silently drops every TCP probe. Adding those entries is what finds phones,
+   * TVs and IoT devices that expose none of the selected ports. The entries are
+   * marked `via: 'arp'` because they are a weaker signal than a TCP response.
+   */
   async attachArp(scan) {
-    if (scan.results.size === 0) return
-    const table = await readArpTable()
-    if (table.size === 0) return
+    let table
+    try {
+      table = await this.readArpTable()
+    } catch {
+      return
+    }
+    if (!table || table.size === 0) return
     for (const [ip, row] of scan.results) {
       const mac = table.get(ip)
       if (mac) row.mac = mac
+    }
+    const targets = new Set(scan.hosts)
+    for (const [ip, mac] of table) {
+      if (scan.results.has(ip) || !targets.has(ip)) continue
+      scan.results.set(ip, {
+        ip,
+        hostname: null,
+        mac,
+        ports: [],
+        latencyMs: 0,
+        via: 'arp',
+      })
     }
   }
 

@@ -38,7 +38,7 @@ const TOOL_PARAMETERS = {
       description:
         'TCP ports to probe, up to 32. Defaults to 21,22,23,80,135,139,443,445,3389,8080. A closed port still proves a host responded.',
     },
-    timeoutMs: { type: 'integer', description: 'Per-connection timeout in milliseconds, 50-10000 (default 450).' },
+    timeoutMs: { type: 'integer', description: 'Per-connection timeout in milliseconds, 50-10000 (default 700).' },
     concurrency: { type: 'integer', description: 'Hosts probed in parallel, 1-128 (default 48).' },
     resolveNames: { type: 'boolean', description: 'Reverse-DNS responsive hosts (default true).' },
     wait: { type: 'boolean', description: 'For scan, wait for completion (default true) up to 90 seconds.' },
@@ -87,6 +87,7 @@ const TOOL_OUTPUT_SCHEMA = {
           mac: { type: 'string' },
           ports: { type: 'array', items: { type: 'integer' } },
           latencyMs: { type: 'integer' },
+          via: { type: 'string', enum: ['tcp', 'arp'] },
         },
       },
     },
@@ -97,7 +98,8 @@ const TOOL_DESCRIPTION =
   'Scan an IPv4 network segment from the Harness host. ' +
   'action "scan" takes a CIDR, range or single address (for example 192.168.1.0/24), probes the given TCP ports in parallel, ' +
   'and returns responsive hosts with reverse-DNS names, ARP MAC addresses and open ports. A refused connection still counts as a response, ' +
-  'so hosts without open ports are discovered. action "interfaces" lists the host\'s own subnets; "status" reports progress; "stop" aborts. ' +
+  'so hosts without open ports are discovered. Live neighbours with no TCP response are added from the host\'s ARP cache and marked via "arp". ' +
+  'action "interfaces" lists the host\'s own subnets; "status" reports progress; "stop" aborts. ' +
   'Limits: 4096 addresses and 32 ports per scan. Only scan networks you are authorized to test.'
 
 const HTTP_STATUS = {
@@ -116,7 +118,7 @@ function seconds(milliseconds) {
 
 function formatHosts(hosts, limit = TOOL_TABLE_LIMIT) {
   const shown = hosts.slice(0, limit)
-  const lines = ['IP\tHostname\tMAC\tOpen ports\tLatency']
+  const lines = ['IP\tHostname\tMAC\tOpen ports\tLatency\tVia']
   for (const host of shown) {
     lines.push(
       [
@@ -124,7 +126,8 @@ function formatHosts(hosts, limit = TOOL_TABLE_LIMIT) {
         host.hostname || '-',
         host.mac || '-',
         host.ports.length > 0 ? host.ports.join(',') : '-',
-        `${host.latencyMs} ms`,
+        host.via === 'arp' ? '-' : `${host.latencyMs} ms`,
+        host.via,
       ].join('\t'),
     )
   }
@@ -135,7 +138,7 @@ function formatHosts(hosts, limit = TOOL_TABLE_LIMIT) {
 function toolResult(action, snapshot) {
   const hosts = Array.isArray(snapshot.results)
     ? snapshot.results.map((row) => {
-        const host = { ip: row.ip, ports: row.ports, latencyMs: row.latencyMs }
+        const host = { ip: row.ip, ports: row.ports, latencyMs: row.latencyMs, via: row.via }
         if (row.hostname) host.hostname = row.hostname
         if (row.mac) host.mac = row.mac
         return host

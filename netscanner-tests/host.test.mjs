@@ -110,6 +110,7 @@ try {
   assert.equal(finished.phase, 'complete')
   assert.equal(finished.aliveCount, 1)
   assert.deepEqual(finished.results[0].ports, [port])
+  assert.equal(finished.results[0].via, 'tcp')
 
   const bad = await call({ op: 'start', cidr: 'not-a-network' })
   assert.equal(bad.status, 400)
@@ -134,6 +135,7 @@ try {
   assert.equal(toolScan.running, false)
   assert.equal(toolScan.aliveCount, 1)
   assert.deepEqual(toolScan.hosts[0].ports, [port])
+  assert.equal(toolScan.hosts[0].via, 'tcp')
   assert.match(toolScan.summary, /scanned 127\.0\.0\.1\/32: 1\/1 host/)
   assert.deepEqual(tool.output.render({}, toolScan), [{ type: 'text', text: toolScan.summary }])
 

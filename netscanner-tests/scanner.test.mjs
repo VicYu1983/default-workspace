@@ -114,6 +114,28 @@ try {
   assert.equal(done.results[0].ip, '127.0.0.1')
   assert.deepEqual(done.results[0].ports, [openPort])
   assert.ok(Number.isInteger(done.results[0].latencyMs))
+  assert.equal(done.results[0].via, 'tcp')
+
+  // A live neighbour whose firewall drops every TCP probe still leaves an ARP
+  // entry; the scan must report it as `via: 'arp'` instead of dropping it.
+  const arpScanner = new NetworkScanner({
+    readArpTable: async () => new Map([['192.0.2.1', 'AA:BB:CC:DD:EE:01']]),
+  })
+  await arpScanner.start({
+    cidr: '192.0.2.0/30',
+    ports: [81],
+    timeoutMs: 100,
+    concurrency: 2,
+    resolveNames: false,
+  })
+  const arpDone = await arpScanner.waitForIdle(10000)
+  assert.equal(arpDone.running, false)
+  assert.equal(arpDone.aliveCount, 1)
+  assert.equal(arpDone.results[0].ip, '192.0.2.1')
+  assert.equal(arpDone.results[0].via, 'arp')
+  assert.deepEqual(arpDone.results[0].ports, [])
+  assert.equal(arpDone.results[0].mac, 'AA:BB:CC:DD:EE:01')
+  arpScanner.dispose()
 
   // A loopback address that is not running: 127.0.0.2/32 still resolves to the
   // loopback interface and is refused, which this scanner treats as reachable.
