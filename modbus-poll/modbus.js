@@ -2,7 +2,10 @@
  * Minimal Modbus TCP client (host side).
  *
  * Implements the subset a monitoring/polling tool needs:
- *   FC03 read holding registers, FC04 read input registers, FC06 write single register.
+ *   FC01 read coils, FC02 read discrete inputs,
+ *   FC03 read holding registers, FC04 read input registers,
+ *   FC05 write single coil, FC06 write single register,
+ *   FC15 write multiple coils, FC16 write multiple registers.
  *
  * One request is in flight at a time; concurrent callers are queued in order so
  * responses can never be matched to the wrong request. A timeout destroys the
@@ -270,5 +273,119 @@ export class ModbusTcpClient {
       address: (body[0] << 8) | body[1],
       value: (body[2] << 8) | body[3],
     }
+  }
+
+  async readCoils(start, count) {
+    return this.readBits(1, start, count)
+  }
+
+  async readDiscreteInputs(start, count) {
+    return this.readBits(2, start, count)
+  }
+
+  async readBits(functionCode, start, count) {
+    integer('start', start, 0, 65535)
+    integer('count', count, 1, 2000)
+    const pdu = Buffer.from([
+      functionCode,
+      (start >> 8) & 0xff,
+      start & 0xff,
+      (count >> 8) & 0xff,
+      count & 0xff,
+    ])
+    const body = await this.request(pdu)
+    const expected = Math.ceil(count / 8)
+    if (body.length < 1 + expected || body[0] < expected) {
+      throw new ModbusError('short bit response', 'protocol-error', {
+        expected,
+        received: Math.max(0, body.length - 1),
+      })
+    }
+    const bits = new Array(count)
+    for (let index = 0; index < count; index += 1) {
+      bits[index] = ((body[1 + (index >> 3)] >> (index & 7)) & 1) === 1
+    }
+    return bits
+  }
+
+  async writeSingleCoil(address, on) {
+    integer('address', address, 0, 65535)
+    const pdu = Buffer.from([5, (address >> 8) & 0xff, address & 0xff, on ? 0xff : 0x00, 0x00])
+    const body = await this.request(pdu)
+    if (body.length < 4) {
+      throw new ModbusError('short coil write response', 'protocol-error', {
+        received: body.length,
+      })
+    }
+    return {
+      address: (body[0] << 8) | body[1],
+      value: ((body[2] << 8) | body[3]) === 0xff00 ? 1 : 0,
+    }
+  }
+
+  async writeMultipleCoils(start, bits) {
+    integer('start', start, 0, 65535)
+    if (!Array.isArray(bits) || bits.length === 0) {
+      throw new ModbusError('bits must be a non-empty array', 'invalid-parameter', { field: 'bits' })
+    }
+    integer('count', bits.length, 1, 1968)
+    const count = bits.length
+    const byteCount = Math.ceil(count / 8)
+    const data = Buffer.alloc(byteCount)
+    bits.forEach((on, index) => {
+      if (on) data[index >> 3] |= 1 << (index & 7)
+    })
+    const pdu = Buffer.concat([
+      Buffer.from([
+        15,
+        (start >> 8) & 0xff,
+        start & 0xff,
+        (count >> 8) & 0xff,
+        count & 0xff,
+        byteCount,
+      ]),
+      data,
+    ])
+    const body = await this.request(pdu)
+    if (body.length < 4) {
+      throw new ModbusError('short multi-coil write response', 'protocol-error', {
+        received: body.length,
+      })
+    }
+    return { address: (body[0] << 8) | body[1], count: (body[2] << 8) | body[3] }
+  }
+
+  async writeMultipleRegisters(start, values) {
+    integer('start', start, 0, 65535)
+    if (!Array.isArray(values) || values.length === 0) {
+      throw new ModbusError('values must be a non-empty array', 'invalid-parameter', {
+        field: 'values',
+      })
+    }
+    integer('count', values.length, 1, 123)
+    const count = values.length
+    const data = Buffer.alloc(count * 2)
+    values.forEach((value, index) => {
+      integer('value', value, 0, 65535)
+      data.writeUInt16BE(value, index * 2)
+    })
+    const pdu = Buffer.concat([
+      Buffer.from([
+        16,
+        (start >> 8) & 0xff,
+        start & 0xff,
+        (count >> 8) & 0xff,
+        count & 0xff,
+        (count * 2) & 0xff,
+      ]),
+      data,
+    ])
+    const body = await this.request(pdu)
+    if (body.length < 4) {
+      throw new ModbusError('short multi-register write response', 'protocol-error', {
+        received: body.length,
+      })
+    }
+    return { address: (body[0] << 8) | body[1], count: (body[2] << 8) | body[3] }
   }
 }

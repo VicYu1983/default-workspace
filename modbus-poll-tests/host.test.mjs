@@ -97,6 +97,70 @@ try {
   const inputs = await call({ op: 'read', kind: 'input', start: 0, count: 3 })
   assert.deepEqual(inputs.json.values, fake.input.slice(0, 3))
 
+  // Typed reads: a float stored in two registers decodes to one row.
+  fake.holding[20] = 0x41bc
+  fake.holding[21] = 0x0000
+  const typed = await call({ op: 'read', kind: 'holding', start: 20, count: 2, type: 'f32' })
+  assert.equal(typed.status, 200)
+  assert.equal(typed.json.rows.length, 1)
+  assert.equal(typed.json.rows[0].text, '23.5')
+  assert.equal(typed.json.rows[0].address, 20)
+  assert.equal(typed.json.type, 'f32')
+  assert.equal(typed.json.wordOrder, 'ABCD')
+
+  // Scaling and word order are applied host-side, so panel and agent agree.
+  const scaled = await call({
+    op: 'read',
+    kind: 'holding',
+    start: 20,
+    count: 2,
+    type: 'f32',
+    scale: 2,
+    offset: -1,
+  })
+  assert.equal(scaled.json.rows[0].text, '46')
+  const cdab = await call({ op: 'read', kind: 'holding', start: 20, count: 2, type: 'f32', wordOrder: 'CDAB' })
+  assert.notEqual(cdab.json.rows[0].text, '23.5', 'the wrong word order must not decode to the same number')
+
+  // A 32-bit read with an odd register count reports the leftover register.
+  const trailing = await call({ op: 'read', kind: 'holding', start: 20, count: 3, type: 'u32' })
+  assert.equal(trailing.json.trailing, 1)
+
+  // Coils and discrete inputs read as booleans.
+  const coils = await call({ op: 'read', kind: 'coil', start: 0, count: 10 })
+  assert.deepEqual(coils.json.bits, fake.coils.slice(0, 10))
+  const discrete = await call({ op: 'read', kind: 'discrete', start: 0, count: 10 })
+  assert.deepEqual(discrete.json.bits, fake.discrete.slice(0, 10))
+
+  // Bit toggling is a read-modify-write of a single holding register.
+  fake.holding[30] = 0x0000
+  const bitSet = await call({ op: 'write-bit', address: 30, bit: 4, value: 1 })
+  assert.equal(bitSet.status, 200)
+  assert.equal(bitSet.json.after, 0x0010)
+  assert.equal(fake.holding[30], 0x0010)
+  const bitClear = await call({ op: 'write-bit', address: 30, bit: 4, value: 0 })
+  assert.equal(bitClear.json.after, 0x0000)
+  assert.equal(fake.holding[30], 0x0000)
+
+  // A value spanning two registers is written with FC16.
+  const floatWrite = await call({ op: 'write', address: 32, value: 1.5, type: 'f32' })
+  assert.equal(floatWrite.status, 200)
+  assert.equal(floatWrite.json.count, 2)
+  assert.deepEqual(fake.holding.slice(32, 34), [0x3fc0, 0x0000])
+
+  // Coil writes and batch writes go through the same route.
+  const coilWrite = await call({ op: 'write', kind: 'coil', address: 5, value: 1 })
+  assert.equal(coilWrite.json.value, 1)
+  assert.equal(fake.coils[5], true)
+  const batch = await call({ op: 'write', address: 70, values: [11, 22, 33] })
+  assert.equal(batch.json.count, 3)
+  assert.deepEqual(fake.holding.slice(70, 73), [11, 22, 33])
+
+  // Discrete inputs are read-only.
+  const discreteWrite = await call({ op: 'write', kind: 'discrete', address: 1, value: 1 })
+  assert.equal(discreteWrite.status, 400)
+  assert.equal(discreteWrite.json.error.code, 'invalid-parameter')
+
   const badValue = await call({ op: 'write', address: 1, value: 70000 })
   assert.equal(badValue.status, 400)
   assert.equal(badValue.json.error.code, 'invalid-parameter')
@@ -142,6 +206,32 @@ try {
   const toolWrite = await tool.execute({ action: 'write', address: 12, value: 777 }, {})
   assert.equal(toolWrite.value, 777)
   assert.equal(fake.holding[12], 777)
+
+  // The agent can read bits and typed registers, and toggle one bit.
+  const toolBits = await tool.execute({ action: 'read', kind: 'coil', start: 0, count: 10 }, {})
+  assert.deepEqual(toolBits.bits, fake.coils.slice(0, 10))
+  assert.match(toolBits.summary, /coil 0\.\.9: 10 bit\(s\)/)
+  assert.match(toolBits.summary, /on: /)
+
+  const toolTyped = await tool.execute({ action: 'read', start: 20, count: 2, type: 'f32' }, {})
+  assert.equal(toolTyped.rows[0].text, '23.5')
+  assert.match(toolTyped.summary, /\(f32 ABCD\)/)
+  assert.match(toolTyped.summary, /address\traw\tvalue/)
+
+  const toolBit = await tool.execute({ action: 'write-bit', address: 30, bit: 0, value: 1 }, {})
+  assert.equal(toolBit.after, 1)
+  assert.match(toolBit.summary, /set bit 0 of holding register 30/)
+
+  const toolBatch = await tool.execute({ action: 'write', address: 80, values: [7, 8] }, {})
+  assert.match(toolBatch.summary, /wrote 2 register\(s\) from 80/)
+
+  const toolFloat = await tool.execute({ action: 'write', address: 90, value: -0.5, type: 'f32' }, {})
+  assert.match(toolFloat.summary, /\(f32 ABCD\)/)
+  assert.deepEqual(fake.holding.slice(90, 92), [0xbf00, 0x0000])
+
+  // Discrete inputs cannot be written, and a bad bit index is refused.
+  await assert.rejects(() => tool.execute({ action: 'write', kind: 'discrete', address: 1, value: 1 }, {}), /invalid-parameter/)
+  await assert.rejects(() => tool.execute({ action: 'write-bit', address: 1, bit: 16, value: 1 }, {}), /invalid-parameter/)
 
   await assert.rejects(() => tool.execute({ action: 'read', start: 1, count: 0 }, {}), /invalid-parameter/)
   await assert.rejects(() => tool.execute({ action: 'bogus' }, {}), /unknown action/)

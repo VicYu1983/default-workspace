@@ -1,5 +1,6 @@
 /**
- * Fake Modbus TCP server used by the plugin tests (FC03, FC04, FC06).
+ * Fake Modbus TCP server used by the plugin tests
+ * (FC01, FC02, FC03, FC04, FC05, FC06, FC15, FC16).
  */
 import net from 'node:net'
 
@@ -11,9 +12,21 @@ export function createFakeServer(options = {}) {
   const size = options.size ?? 256
   const holding = new Array(size).fill(0)
   const input = new Array(size).fill(0)
+  const coils = new Array(size).fill(false)
+  const discrete = new Array(size).fill(false)
   for (let index = 0; index < size; index += 1) {
     holding[index] = (index * 7 + 100) & 0xffff
     input[index] = (index * 13 + 1) & 0xffff
+    coils[index] = index % 3 === 0
+    discrete[index] = index % 5 === 0
+  }
+
+  function packBits(bank, start, count) {
+    const bytes = Buffer.alloc(Math.ceil(count / 8))
+    for (let index = 0; index < count; index += 1) {
+      if (bank[start + index]) bytes[index >> 3] |= 1 << (index & 7)
+    }
+    return bytes
   }
 
   const server = net.createServer((socket) => {
@@ -32,7 +45,17 @@ export function createFakeServer(options = {}) {
         const functionCode = frame.readUInt8(7)
         let pdu
 
-        if (functionCode === 3 || functionCode === 4) {
+        if (functionCode === 1 || functionCode === 2) {
+          const start = frame.readUInt16BE(8)
+          const count = frame.readUInt16BE(10)
+          const bank = functionCode === 1 ? coils : discrete
+          if (count < 1 || start + count > bank.length) {
+            pdu = exceptionFrame(functionCode, 2)
+          } else {
+            const data = packBits(bank, start, count)
+            pdu = Buffer.concat([Buffer.from([functionCode, data.length]), data])
+          }
+        } else if (functionCode === 3 || functionCode === 4) {
           const start = frame.readUInt16BE(8)
           const count = frame.readUInt16BE(10)
           const bank = functionCode === 3 ? holding : input
@@ -46,6 +69,15 @@ export function createFakeServer(options = {}) {
             }
             pdu = Buffer.concat([Buffer.from([functionCode]), pdu])
           }
+        } else if (functionCode === 5) {
+          const address = frame.readUInt16BE(8)
+          const value = frame.readUInt16BE(10)
+          if (address >= coils.length) {
+            pdu = exceptionFrame(functionCode, 2)
+          } else {
+            coils[address] = value === 0xff00
+            pdu = Buffer.from(frame.subarray(7, 12))
+          }
         } else if (functionCode === 6) {
           const address = frame.readUInt16BE(8)
           const value = frame.readUInt16BE(10)
@@ -54,6 +86,31 @@ export function createFakeServer(options = {}) {
           } else {
             holding[address] = value
             pdu = Buffer.from(frame.subarray(7, 12))
+          }
+        } else if (functionCode === 15) {
+          const start = frame.readUInt16BE(8)
+          const count = frame.readUInt16BE(10)
+          const byteCount = frame.readUInt8(12)
+          if (count < 1 || start + count > coils.length || byteCount !== Math.ceil(count / 8)) {
+            pdu = exceptionFrame(functionCode, 2)
+          } else {
+            for (let index = 0; index < count; index += 1) {
+              const byte = frame.readUInt8(13 + (index >> 3))
+              coils[start + index] = ((byte >> (index & 7)) & 1) === 1
+            }
+            pdu = Buffer.from([functionCode, frame[8], frame[9], frame[10], frame[11]])
+          }
+        } else if (functionCode === 16) {
+          const start = frame.readUInt16BE(8)
+          const count = frame.readUInt16BE(10)
+          const byteCount = frame.readUInt8(12)
+          if (count < 1 || start + count > holding.length || byteCount !== count * 2) {
+            pdu = exceptionFrame(functionCode, 2)
+          } else {
+            for (let index = 0; index < count; index += 1) {
+              holding[start + index] = frame.readUInt16BE(13 + index * 2)
+            }
+            pdu = Buffer.from([functionCode, frame[8], frame[9], frame[10], frame[11]])
           }
         } else {
           pdu = exceptionFrame(functionCode, 1)
@@ -73,10 +130,12 @@ export function createFakeServer(options = {}) {
   return {
     holding,
     input,
+    coils,
+    discrete,
     listen() {
       return new Promise((resolve, reject) => {
         server.once('error', reject)
-        server.listen(0, '127.0.0.1', () => {
+        server.listen(options.port ?? 0, '127.0.0.1', () => {
           server.removeListener('error', reject)
           resolve(server.address().port)
         })

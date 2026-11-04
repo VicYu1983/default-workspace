@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Modbus Poll",
-    "description": "Connect to a Modbus TCP server from a sidebar panel, read holding or input registers, and write single holding registers."
+    "description": "Connect to a Modbus TCP server from a sidebar panel: read registers in u16/i16/u32/i32/f32 with word order and scaling, toggle register bits and coils, and write values back."
   }
 }

@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Modbus 讀寫台",
-    "description": "從側邊面板連線 Modbus TCP 伺服器，讀取保持或輸入暫存器，並寫入單一保持暫存器。"
+    "description": "從側邊面板連線 Modbus TCP 伺服器：以 u16/i16/u32/i32/f32 型別、字序與比例讀取暫存器，切換暫存器位元與線圈，並寫回數值。"
   }
 }
