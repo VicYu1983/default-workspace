@@ -92,11 +92,17 @@ export class ModbusTcpClient {
         this.socket = socket
         this.closed = false
         this.buffer = Buffer.alloc(0)
-        socket.on('data', (chunk) => this.onData(chunk))
+        // A late event from a superseded socket must not tear down the current
+        // connection, or a timeout followed by a reopen would look dead.
+        socket.on('data', (chunk) => {
+          if (this.socket === socket) this.onData(chunk)
+        })
         socket.on('error', (error) => {
+          if (this.socket !== socket) return
           this.teardown(new ModbusError(`socket error: ${error.message}`, 'socket-error'))
         })
         socket.on('close', () => {
+          if (this.socket !== socket) return
           this.teardown(new ModbusError('connection closed by peer', 'connection-closed'))
         })
         resolve(this)
@@ -203,8 +209,10 @@ export class ModbusTcpClient {
       const timer = setTimeout(() => {
         this.pending.delete(transactionId)
         const error = new ModbusError(`no response within ${this.timeoutMs}ms`, 'timeout')
-        this.teardown(error)
+        // Read the socket before teardown clears it, otherwise the late frame
+        // owner never gets destroyed and the connection leaks.
         const current = this.socket
+        this.teardown(error)
         if (current) current.destroy()
         reject(error)
       }, this.timeoutMs)

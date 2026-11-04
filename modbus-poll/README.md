@@ -15,7 +15,9 @@ DSH 的 Modbus TCP 讀寫外掛。側邊欄提供可設定連線與資料型別�
 - **設定持久化**：連線參數、資料表選項、已存裝置都存在瀏覽器 `localStorage`（`dsh.modbus-poll/v1`）。
 - **已存裝置**：把 `host:port / 站號` 存成 preset，一鍵切回（切換時會先中斷目前連線，避免顯示不實的位址）。
 - **值變動提示**：與上一輪不同的列會在位址欄閃一下。
-- **Agent 工具**：`modbus_poll`，支援 `status`、`connect`、`disconnect`、`read`、`write`、`write-bit`、`watch`。
+- **讀取鎖定**：面板上的「唯讀鎖定」會同時擋下面板與 Agent 的寫入（`write-protected`），避免誤寫；只有面板能開關。
+- **寫入紀錄**：每次寫入都記下時間、來源（面板／Agent）、位址、數值，面板可展開查看，Agent 用 `guard` 讀取。
+- **Agent 工具**：`modbus_poll`，支援 `status`、`connect`、`disconnect`、`read`、`write`、`write-bit`、`watch`、`dump`、`scan-units`、`guard`。
 
 ## 使用
 
@@ -36,6 +38,10 @@ DSH 的 Modbus TCP 讀寫外掛。側邊欄提供可設定連線與資料型別�
 { "action": "write", "address": 20, "values": [1, 2, 3] }
 { "action": "write-bit", "address": 30, "bit": 4, "value": 1 }
 { "action": "watch", "start": 30, "expect": 1, "timeoutMs": 3000 }
+{ "action": "dump", "start": 0, "count": 300 }
+{ "action": "dump", "kind": "coil", "start": 0, "count": 64 }
+{ "action": "scan-units", "from": 1, "to": 16, "timeoutMs": 150 }
+{ "action": "guard" }
 { "action": "status" }
 ```
 
@@ -49,6 +55,12 @@ DSH 的 Modbus TCP 讀寫外掛。側邊欄提供可設定連線與資料型別�
 ```
 
 浮點值預設帶極小相對容差，也可用 `tolerance` 指定絕對容差。
+
+`dump` 會自動把大範圍切成 125 筆（位元 2000 筆）的請求，回傳 `chunks`、完整的 `rows`（最多 200 列）與分頁提示；32 位型別的切塊會對齊值寬度，不會把一個浮點數切成兩半。超過上限（1024 個暫存器／2048 個位元）會回報 `truncated`。
+
+`scan-units` 用一條**獨立連線**掃站號，不會干擾面板正在用的連線。有回應（含 Modbus 例外）就算存在，靜默不算；`maxMs` 是整體時間預算，逾時會回報 `truncated`。
+
+`guard` 不會被 Agent 用來解鎖：它只能讀取鎖定狀態與最近的寫入紀錄，開關在面板上。
 
 ## 通訊協定
 
@@ -92,17 +104,19 @@ node modbus-poll-tests/render.test.mjs   # 以最小 hook runtime 實際渲染�
 ```powershell
 node modbus-poll-tools/serve-fake.mjs 15020
 node modbus-poll-tools/query.mjs 127.0.0.1 15020 0 16
-node modbus-poll-tools/demo-watch.mjs   # watch 與自動重連的實際輸出
+node modbus-poll-tools/demo.mjs   # watch／dump／唯讀鎖定／自動重連的實際輸出
 ```
 
 ## 限制
 
 - 一次讀取最多 125 個暫存器或 2000 個位元；寫入最多 123 個暫存器或 1968 個線圈。
 - `watch` 最長等 60 秒、最短間隔 50 ms；它是輪詢，不是事件訂閱，逾時請自行重試。
+- `dump` 一次最多 1024 個暫存器／2048 個位元，超過會回報 `truncated`。
+- `scan-units` 逐站探測，全部靜默時最慢約「站數 × timeoutMs」，請用 `from`/`to` 縮小範圍。
 - 一次只連一台伺服器；切換裝置請先中斷（面板會自動處理）。
 - 自動重連沿用同一個 host/port/站號；換裝置請重新「連線」。
 - 沒有 TLS／序列埠（僅 Modbus TCP）。
-- 寫入立即生效，沒有二次確認；請只對你有權限的設備操作。
+- 寫入立即生效，沒有二次確認；需要時請先開「唯讀鎖定」或用允許範圍限制。請只對你有權限的設備操作。
 
 ## 安裝狀態
 

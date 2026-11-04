@@ -33,22 +33,39 @@ function reply(payload) {
   return { ok: true, status: 200, json: async () => payload }
 }
 
+let guardState = { readOnly: false, writes: [] }
+
 globalThis.fetch = async (_url, init) => {
   const body = JSON.parse(init.body)
   requests.push(body)
   if (body.op === 'status') {
-    return reply({ ok: true, connected: false })
+    return reply({ ok: true, connected: false, readOnly: guardState.readOnly })
   }
   if (body.op === 'connect') {
     return reply({ ok: true, connected: true, host: body.host, port: body.port, unitId: body.unitId })
+  }
+  if (body.op === 'guard') {
+    return reply({ ok: true, ...guardState })
+  }
+  if (body.op === 'set-guard') {
+    guardState = { readOnly: body.readOnly === true, writes: guardState.writes }
+    return reply({ ok: true, ...guardState })
   }
   if (body.op === 'disconnect') {
     return reply({ ok: true, connected: false })
   }
   if (body.op === 'write-bit') {
+    guardState = {
+      readOnly: guardState.readOnly,
+      writes: [{ at: new Date().toISOString(), source: 'panel', kind: 'holding', address: body.address, values: [1 << body.bit] }, ...guardState.writes],
+    }
     return reply({ ok: true, address: body.address, bit: body.bit, before: 0, after: 1 << body.bit })
   }
   if (body.op === 'write') {
+    guardState = {
+      readOnly: guardState.readOnly,
+      writes: [{ at: new Date().toISOString(), source: 'panel', kind: body.kind ?? 'holding', address: body.address, values: [body.value] }, ...guardState.writes],
+    }
     return reply({ ok: true, address: body.address, value: body.value, values: [body.value] })
   }
   if (body.op === 'read') {
@@ -225,6 +242,33 @@ tree = await settle()
 const bitWrite = requests.filter((body) => body.op === 'write-bit').at(-1)
 assert.ok(bitWrite, 'bit write sent')
 assert.deepEqual({ address: bitWrite.address, bit: bitWrite.bit }, { address: 0, bit: 3 })
+
+// The write log shows the write that just happened.
+const logSummary = findAll(tree, (node) => node.type === 'summary')[0]
+assert.ok(logSummary, 'write log rendered after a write')
+assert.match(String(logSummary.props.children), /poll\.writeLog \(1\)/)
+
+// The read-only lock disables every write path and tells the host.
+const guardBox = findAll(tree, (node) => node.type === 'input' && node.props.type === 'checkbox')[0]
+assert.ok(guardBox, 'guard checkbox rendered')
+assert.equal(guardBox.props.checked, false)
+await guardBox.props.onChange({ target: { checked: true } })
+tree = await settle()
+assert.equal(guardState.readOnly, true, 'host told to lock writes')
+assert.ok(
+  findAll(tree, (node) => node.type === 'button' && node.props.title === 'bit 1')[0].props.disabled,
+  'bit buttons disabled while locked',
+)
+const writesBeforeLock = requests.filter((body) => body.op === 'write-bit').length
+await findAll(tree, (node) => node.type === 'button' && node.props.title === 'bit 1')[0].props.onClick()
+assert.equal(
+  requests.filter((body) => body.op === 'write-bit').length,
+  writesBeforeLock,
+  'a locked panel must not send a write',
+)
+await guardBox.props.onChange({ target: { checked: false } })
+tree = await settle()
+assert.equal(guardState.readOnly, false, 'host told to unlock writes')
 
 // Switch the table to coils and read again.
 const kindSelect = findAll(tree, (node) => node.type === 'select' && node.props.value === 'holding')[0]

@@ -33,9 +33,9 @@ const TOOL_PARAMETERS = {
   properties: {
     action: {
       type: 'string',
-      enum: ['status', 'connect', 'disconnect', 'read', 'write', 'write-bit', 'watch'],
+      enum: ['status', 'connect', 'disconnect', 'read', 'write', 'write-bit', 'watch', 'dump', 'scan-units', 'guard'],
       description:
-        'status returns the live connection; connect opens or reuses one; disconnect closes it; read reads registers or bits; write writes registers or coils; write-bit toggles one bit of a holding register; watch polls one value until it equals expect, or times out.',
+        'status returns the live connection; connect opens or reuses one; disconnect closes it; read reads registers or bits; write writes registers or coils; write-bit toggles one bit of a holding register; watch polls one value until it equals expect; dump reads a large range in chunks; scan-units probes unit ids on one host; guard reports the read-only lock and recent writes.',
     },
     host: { type: 'string', description: 'Server host name or IP. Required for connect.' },
     port: { type: 'integer', description: 'TCP port, default 502.' },
@@ -86,12 +86,24 @@ const TOOL_PARAMETERS = {
     },
     timeoutMs: { type: 'integer', description: 'watch deadline in ms, 100-60000 (default 5000).' },
     intervalMs: { type: 'integer', description: 'watch poll interval in ms, 50-5000 (default 200).' },
+    chunk: {
+      type: 'integer',
+      description: 'dump: registers per request, 1-125 (default 125); 32-bit types round down to their width.',
+    },
+    from: { type: 'integer', description: 'scan-units: first unit id, 0-255 (default 1).' },
+    to: { type: 'integer', description: 'scan-units: last unit id, 0-255 (default 247).' },
+    maxMs: {
+      type: 'integer',
+      description: 'scan-units: overall time budget in ms, 1000-120000 (default 60000).',
+    },
   },
 }
 
 const TOOL_OUTPUT_SCHEMA = {
   type: 'object',
-  additionalProperties: false,
+  // Actions return different shapes; extras stay allowed so one new field
+  // cannot break a tool call at runtime.
+  additionalProperties: true,
   required: ['action', 'summary', 'connected'],
   properties: {
     action: { type: 'string' },
@@ -109,6 +121,12 @@ const TOOL_OUTPUT_SCHEMA = {
     count: { type: 'integer' },
     values: { type: 'array', items: { type: 'integer' } },
     bits: { type: 'array', items: { type: 'boolean' } },
+    width: { type: 'integer' },
+    trailing: { type: 'integer' },
+    chunkSize: { type: 'integer' },
+    requested: { type: 'integer' },
+    from: { type: 'integer' },
+    to: { type: 'integer' },
     rows: {
       type: 'array',
       items: {
@@ -132,6 +150,13 @@ const TOOL_OUTPUT_SCHEMA = {
     attempts: { type: 'integer' },
     elapsedMs: { type: 'integer' },
     reconnected: { type: 'boolean' },
+    chunks: { type: 'integer' },
+    truncated: { type: 'boolean' },
+    scanned: { type: 'integer' },
+    responded: { type: 'array', items: { type: 'integer' } },
+    readOnly: { type: 'boolean' },
+    writeCount: { type: 'integer' },
+    writes: { type: 'array', items: { type: 'object', additionalProperties: true } },
     latencyMs: { type: 'integer' },
   },
 }
@@ -140,8 +165,10 @@ const TOOL_DESCRIPTION =
   'Read and write Modbus TCP registers and coils on a server, using the same connection as the Modbus Poll panel. ' +
   'Call action "connect" first (host, port, unitId), then action "read" (kind, start, count, type, wordOrder, scale, offset) ' +
   'or action "write" (address, value or values) or action "write-bit" (address, bit, value), ' +
-  'or action "watch" (start, expect, timeoutMs) to wait until a value settles. ' +
-  'Writes change the server immediately. A dead socket is reopened automatically on the next action. ' +
+  'action "watch" (start, expect, timeoutMs) to wait until a value settles, ' +
+  'action "dump" to read a large range, or action "scan-units" to find responding unit ids on one host. ' +
+  'Writes change the server immediately and are refused while the read-only guard is on (action "guard" reports it). ' +
+  'A dead socket is reopened automatically on the next action. ' +
   'action "status" reports the live connection without touching the wire; action "disconnect" closes it.'
 
 function hex4(value) {
@@ -194,6 +221,7 @@ const HTTP_STATUS = {
   'invalid-parameter': 400,
   'invalid-json': 400,
   'body-too-large': 413,
+  'write-protected': 403,
   'not-connected': 409,
   disconnected: 409,
   'connection-closed': 409,
@@ -206,15 +234,31 @@ const HTTP_STATUS = {
   timeout: 504,
 }
 
+/** Upper bounds for one `dump`, so an agent cannot ask for an unbounded answer. */
+const DUMP_LIMITS = { registers: 1024, bits: 2048 }
+/** Rows the `dump` tool returns verbatim; the rest is paged with start/count. */
+const DUMP_ROW_CAP = 200
+/** Rows the `dump` summary prints; the rest lives in `rows`. */
+const DUMP_SUMMARY_ROWS = 20
+const WRITE_LOG_LIMIT = 200
+
 export const inject = ['webServer', 'tools']
 
 export function apply(ctx) {
-  const state = { client: null, target: null, lastError: null, reopening: null }
+  const state = {
+    client: null,
+    target: null,
+    lastError: null,
+    reopening: null,
+    readOnly: false,
+    writes: [],
+  }
 
   function describe() {
     const client = state.client
+    const base = { readOnly: state.readOnly, writeCount: state.writes.length }
     if (!client || client.closed) {
-      return { connected: false, host: null, port: null, unitId: null, lastError: state.lastError }
+      return { connected: false, host: null, port: null, unitId: null, lastError: state.lastError, ...base }
     }
     return {
       connected: true,
@@ -222,7 +266,39 @@ export function apply(ctx) {
       port: client.port,
       unitId: client.unitId,
       lastError: state.lastError,
+      ...base,
     }
+  }
+
+  /** The read-only guard is the panel's switch; the agent must respect it. */
+  function assertWritable() {
+    if (state.readOnly) {
+      throw new ModbusError(
+        'writes are locked by the read-only guard; clear the lock in the Modbus Poll panel first',
+        'write-protected',
+      )
+    }
+  }
+
+  function recordWrite(source, written) {
+    const client = state.client
+    state.writes.unshift({
+      at: new Date().toISOString(),
+      source,
+      kind: written.kind ?? 'holding',
+      address: written.address,
+      value: written.value,
+      values: written.values,
+      bit: written.bit,
+      unitId: client ? client.unitId : (state.target && state.target.unitId) ?? null,
+      host: client ? client.host : (state.target && state.target.host) ?? null,
+      port: client ? client.port : (state.target && state.target.port) ?? null,
+    })
+    if (state.writes.length > WRITE_LOG_LIMIT) state.writes.length = WRITE_LOG_LIMIT
+  }
+
+  function guardSnapshot() {
+    return { readOnly: state.readOnly, writes: state.writes.slice(0, 20) }
   }
 
   async function connect(body) {
@@ -453,7 +529,147 @@ export function apply(ctx) {
     }
   }
 
-  async function dispatch(body) {
+  /**
+   * Read a large range in protocol-sized chunks (125 registers / 2000 bits).
+   *
+   * A 32-bit type forces the chunk to be a multiple of its width, otherwise a
+   * value straddling two chunks would decode from half of its registers.
+   */
+  async function dumpRange(body) {
+    const kind = normalizeKind(body.kind)
+    const start = Number(body.start)
+    const type = normalizeType(body.type)
+    const width = typeWidth(type)
+    const limit = kind === 'coil' || kind === 'discrete' ? DUMP_LIMITS.bits : DUMP_LIMITS.registers
+    const requested = Number(body.count)
+    if (!Number.isInteger(requested) || requested < 1) {
+      throw new ModbusError('count must be a positive integer', 'invalid-parameter', { field: 'count' })
+    }
+    const count = Math.min(requested, limit)
+
+    const hardChunk = kind === 'coil' || kind === 'discrete' ? 2000 : 125
+    const rawChunk = clamp(Number(body.chunk ?? hardChunk), width, hardChunk)
+    const chunkSize = Math.max(width, Math.floor(rawChunk / width) * width)
+
+    const values = []
+    const rows = []
+    const bits = []
+    let latencyMs = 0
+    let chunks = 0
+
+    for (let offset = 0; offset < count; offset += chunkSize) {
+      const size = Math.min(chunkSize, count - offset)
+      const part = await dispatch({
+        op: 'read',
+        kind,
+        start: start + offset,
+        count: size,
+        unitId: body.unitId,
+        type: body.type,
+        wordOrder: body.wordOrder,
+        scale: body.scale,
+        offset: body.offset,
+      })
+      chunks += 1
+      latencyMs += part.latencyMs
+      if (Array.isArray(part.bits)) bits.push(...part.bits)
+      else {
+        values.push(...part.values)
+        rows.push(...part.rows)
+      }
+    }
+
+    return {
+      kind,
+      start,
+      count,
+      requested,
+      truncated: requested > count,
+      chunks,
+      chunkSize,
+      type,
+      wordOrder: normalizeWordOrder(body.wordOrder),
+      scale: normalizeScaling(body).scale,
+      offset: normalizeScaling(body).offset,
+      latencyMs,
+      ...(kind === 'coil' || kind === 'discrete' ? { bits } : { values, rows }),
+    }
+  }
+
+  /**
+   * Probe unit ids on one host over a dedicated socket.
+   *
+   * A Modbus exception still proves a device is there (it answered), so both
+   * a value and an exception count as "responded"; silence does not.
+   */
+  async function scanUnits(body) {
+    const target = state.target
+    const host = String(body.host ?? (target && target.host) ?? '').trim()
+    if (host === '') {
+      throw new ModbusError('host is required (connect first, or pass host)', 'invalid-parameter', {
+        field: 'host',
+      })
+    }
+    const port = Number(body.port ?? (target && target.port) ?? 502)
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      throw new ModbusError('port must be an integer in 1..65535', 'invalid-parameter', { field: 'port' })
+    }
+    const from = clamp(Number(body.from ?? 1), 0, 255)
+    const to = clamp(Number(body.to ?? 247), 0, 255)
+    if (to < from) {
+      throw new ModbusError('to must be greater than or equal to from', 'invalid-parameter', {
+        field: 'to',
+      })
+    }
+    const probeTimeout = clamp(Number(body.timeoutMs ?? 150), 50, 2000)
+    const maxMs = clamp(Number(body.maxMs ?? 60000), 1000, 120000)
+    const address = Number(body.address ?? 0)
+
+    const began = Date.now()
+    const responded = []
+    let scanned = 0
+    let truncated = false
+
+    const client = new ModbusTcpClient({ host, port, unitId: from, timeoutMs: probeTimeout })
+    await client.open()
+    try {
+      for (let unitId = from; unitId <= to; unitId += 1) {
+        if (Date.now() - began > maxMs) {
+          truncated = true
+          break
+        }
+        if (client.closed) await client.open()
+        client.unitId = unitId
+        scanned += 1
+        try {
+          await client.readHoldingRegisters(address, 1)
+          responded.push(unitId)
+        } catch (error) {
+          if (error.code === 'modbus-exception') responded.push(unitId)
+          else if (error.code === 'timeout' || error.code === 'connection-closed' || error.code === 'socket-error') {
+            /* silence: the unit is not there, or it ignores this address */
+          } else {
+            throw error
+          }
+        }
+      }
+    } finally {
+      client.close()
+    }
+
+    return {
+      host,
+      port,
+      from,
+      to,
+      scanned,
+      responded,
+      truncated,
+      elapsedMs: Date.now() - began,
+    }
+  }
+
+  async function dispatch(body, source = 'panel') {
     const op = String(body.op ?? '')
     switch (op) {
       case 'status':
@@ -473,20 +689,33 @@ export function apply(ctx) {
         return reconnected ? { ...result, reconnected: true } : result
       }
       case 'write': {
+        assertWritable()
         const { client, reconnected } = await ensureClient(body)
         const result = await writeValue(client, body)
+        recordWrite(source, result)
         return reconnected ? { ...result, reconnected: true } : result
       }
       case 'write-bit': {
+        assertWritable()
         const { client, reconnected } = await ensureClient(body)
         const result = await writeBit(client, body)
+        recordWrite(source, { ...result, kind: 'holding', values: [result.after] })
         return reconnected ? { ...result, reconnected: true } : result
       }
       case 'watch':
         return watchValue(body)
+      case 'dump':
+        return dumpRange(body)
+      case 'scan-units':
+        return scanUnits(body)
+      case 'guard':
+        return guardSnapshot()
+      case 'set-guard':
+        state.readOnly = toBit(body.readOnly, 'readOnly')
+        return guardSnapshot()
       default:
         throw new ModbusError(
-          `unknown operation ${JSON.stringify(op)}; use status, connect, disconnect, read, write, write-bit or watch`,
+          `unknown operation ${JSON.stringify(op)}; use status, connect, disconnect, read, write, write-bit, watch, dump, scan-units or guard`,
           'invalid-parameter',
           { field: 'op' },
         )
@@ -632,7 +861,14 @@ export function apply(ctx) {
         const summary = snapshot.connected
           ? `connected to ${snapshot.host}:${snapshot.port} unit ${snapshot.unitId}`
           : `not connected${snapshot.lastError ? ` (last error: ${snapshot.lastError})` : ''}`
-        return { action, summary, connected: snapshot.connected, ...connectionFields() }
+        return {
+          action,
+          summary,
+          connected: snapshot.connected,
+          readOnly: snapshot.readOnly,
+          writeCount: snapshot.writeCount,
+          ...connectionFields(),
+        }
       }
       case 'connect': {
         await dispatch({ op: 'connect', host: args.host, port: args.port, unitId: args.unitId })
@@ -702,7 +938,7 @@ export function apply(ctx) {
           wordOrder: args.wordOrder,
           scale: args.scale,
           offset: args.offset,
-        })
+        }, 'tool')
         return {
           action,
           summary: noteReconnect(writeSummary(written), written),
@@ -718,7 +954,7 @@ export function apply(ctx) {
           bit: args.bit,
           value: args.value,
           unitId: args.unitId,
-        })
+        }, 'tool')
         const verb = written.value ? 'set' : 'cleared'
         return {
           action,
@@ -757,9 +993,97 @@ export function apply(ctx) {
           : `watch ${where}: still ${current} after ${result.elapsedMs} ms (${result.attempts} attempt(s)), expected ${String(result.expect)}`
         return { action, summary: noteReconnect(summary, result), connected: true, ...connectionFields(), ...result }
       }
+      case 'dump': {
+        const result = await dispatch({
+          op: 'dump',
+          kind: args.kind,
+          start: args.start,
+          count: args.count,
+          unitId: args.unitId,
+          type: args.type,
+          wordOrder: args.wordOrder,
+          scale: args.scale,
+          offset: args.offset,
+          chunk: args.chunk,
+        }, 'tool')
+        const isBits = result.kind === 'coil' || result.kind === 'discrete'
+        const total = isBits ? result.bits.length : result.rows.length
+        const end = result.start + (isBits ? result.bits.length : result.values.length) - 1
+        const shown = isBits ? result.bits.slice(0, DUMP_ROW_CAP) : result.rows.slice(0, DUMP_ROW_CAP)
+        let body = ''
+        if (isBits) {
+          const on = []
+          result.bits.forEach((value, index) => {
+            if (value) on.push(result.start + index)
+          })
+          const listed = on.slice(0, 40)
+          body = `\non: ${on.length === 0 ? 'none' : listed.join(', ') + (on.length > listed.length ? `, … (${on.length - listed.length} more)` : '')}`
+        } else {
+          const lines = shown
+            .slice(0, DUMP_SUMMARY_ROWS)
+            .map((row) => `${row.address}\t${row.raw.map((word) => hex4(word)).join(' ')}\t${row.text}`)
+          body = `\naddress\traw\tvalue\n${lines.join('\n')}`
+          if (result.rows.length > lines.length) {
+            body += `\n… (${result.rows.length - lines.length} more rows in rows[]; page with start)`
+          }
+        }
+        return {
+          action,
+          summary:
+            `dump ${result.kind} ${result.start}..${end}: ${total} value(s) in ${result.chunks} chunk(s), ` +
+            `${result.latencyMs} ms${result.truncated ? ` (capped at ${result.count}, asked for ${result.requested})` : ''}${body}`,
+          connected: true,
+          ...connectionFields(),
+          ...result,
+          rows: isBits ? undefined : shown,
+          bits: isBits ? shown : undefined,
+          values: isBits
+            ? undefined
+            : result.values.slice(0, DUMP_ROW_CAP * (result.type === 'u16' || result.type === 'i16' ? 1 : 2)),
+        }
+      }
+      case 'scan-units': {
+        const result = await dispatch({
+          op: 'scan-units',
+          host: args.host,
+          port: args.port,
+          from: args.from,
+          to: args.to,
+          timeoutMs: args.timeoutMs,
+          maxMs: args.maxMs,
+          address: args.address,
+        }, 'tool')
+        const list = result.responded.length === 0 ? 'none' : result.responded.join(', ')
+        return {
+          action,
+          summary:
+            `scan-units ${result.host}:${result.port} units ${result.from}..${result.to}: ` +
+            `${result.scanned} probed in ${result.elapsedMs} ms, responded: ${list}` +
+            `${result.truncated ? ' (stopped early by maxMs)' : ''}`,
+          connected: describe().connected,
+          ...result,
+        }
+      }
+      case 'guard': {
+        const snapshot = await dispatch({ op: 'guard' })
+        const lines = snapshot.writes.map((entry) => {
+          const detail = Array.isArray(entry.values) && entry.values.length > 0
+            ? entry.values.map((value) => String(value)).join(',')
+            : String(entry.value)
+          return `${entry.at} ${entry.source} ${entry.kind} ${entry.address}: ${detail}`
+        })
+        return {
+          action,
+          summary:
+            `read-only guard is ${snapshot.readOnly ? 'ON' : 'off'}; ${snapshot.writes.length} recent write(s)` +
+            (lines.length > 0 ? `\nwhen\tsource\tkind\taddress\tvalue\n${lines.join('\n')}` : ''),
+          connected: describe().connected,
+          ...snapshot,
+        }
+      }
       default:
         throw new ModbusError(
-          `unknown action ${JSON.stringify(action)}; use status, connect, disconnect, read, write, write-bit or watch`,
+          `unknown action ${JSON.stringify(action)}; use status, connect, disconnect, read, write, write-bit, watch, dump, scan-units or guard`,
           'invalid-parameter',
           { field: 'action' },
         )

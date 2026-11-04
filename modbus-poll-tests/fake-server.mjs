@@ -47,6 +47,8 @@ export function createFakeServer(options = {}) {
         const transactionId = frame.readUInt16BE(0)
         const unitId = frame.readUInt8(6)
         const functionCode = frame.readUInt8(7)
+        // With `units`, only those ids answer; the rest stay silent on purpose.
+        if (options.units && !options.units.includes(unitId)) continue
         let pdu
 
         if (functionCode === 1 || functionCode === 2) {
@@ -141,6 +143,10 @@ export function createFakeServer(options = {}) {
       for (const socket of sockets) socket.destroy()
       sockets.clear()
     },
+    /** Live server-side connections; a leak shows up here. */
+    connectionCount() {
+      return sockets.size
+    },
     listen() {
       return new Promise((resolve, reject) => {
         server.once('error', reject)
@@ -151,6 +157,10 @@ export function createFakeServer(options = {}) {
       })
     },
     close() {
+      // Drop live connections first: server.close() waits for them, and a test
+      // that timed out would otherwise hang forever.
+      for (const socket of sockets) socket.destroy()
+      sockets.clear()
       return new Promise((resolve) => server.close(() => resolve()))
     },
   }

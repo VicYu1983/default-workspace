@@ -78,6 +78,12 @@ window.__ModuleLoader__.load({
         'poll.off': 'Off',
         'poll.toggle': 'Toggle',
         'poll.reconnected': 'Reconnected to the server.',
+        'poll.readOnlyLock': 'Read-only lock',
+        'poll.guardOn': 'Writes are locked.',
+        'poll.guardOff': 'Writes are unlocked.',
+        'poll.writeLog': 'Write log',
+        'poll.writeLogPanel': 'panel',
+        'poll.writeLogTool': 'agent',
       },
       zh: {
         'poll.title': 'Modbus 讀寫台',
@@ -127,6 +133,12 @@ window.__ModuleLoader__.load({
         'poll.off': '關',
         'poll.toggle': '切換',
         'poll.reconnected': '已重新連線至伺服器。',
+        'poll.readOnlyLock': '唯讀鎖定',
+        'poll.guardOn': '已鎖定寫入。',
+        'poll.guardOff': '已解除寫入鎖定。',
+        'poll.writeLog': '寫入紀錄',
+        'poll.writeLogPanel': '面板',
+        'poll.writeLogTool': 'Agent',
       },
     }
 
@@ -185,6 +197,12 @@ window.__ModuleLoader__.load({
  .mbp-changed > td:first-child { animation:mbpFlash 1.4s ease-out; }
  @keyframes mbpFlash { from { box-shadow:inset 2px 0 0 var(--dsw-alias-brand-primary); } to { box-shadow:inset 2px 0 0 transparent; } }
  .mbp-coil { display:inline-flex; align-items:center; gap:6px; }
+ .mbp-tablebar-right { display:flex; align-items:center; gap:12px; }
+ .mbp-guard { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--dsw-alias-label-secondary); cursor:pointer; user-select:none; white-space:nowrap; }
+ .mbp-log { margin:6px 10px 4px; font-size:12px; color:var(--dsw-alias-label-secondary); }
+ .mbp-log summary { cursor:pointer; }
+ .mbp-log ul { margin:6px 0 0; padding-left:18px; }
+ .mbp-log li { padding:2px 0; }
  `
 
     function hex4(value) {
@@ -365,6 +383,8 @@ window.__ModuleLoader__.load({
         const [drafts, setDrafts] = React.useState({})
         const [notice, setNotice] = React.useState('')
         const [changed, setChanged] = React.useState([])
+        const [readOnly, setReadOnly] = React.useState(false)
+        const [writes, setWrites] = React.useState([])
         const noticeTimer = React.useRef(0)
         const failures = React.useRef(0)
         const inflight = React.useRef(false)
@@ -481,10 +501,22 @@ window.__ModuleLoader__.load({
           }
         }, [polling, connected, view.interval])
 
+        // The guard lives on the host, so the agent and the panel see one switch.
+        const refreshGuard = React.useCallback(async () => {
+          try {
+            const data = await callHost({ op: 'guard' })
+            setReadOnly(data.readOnly === true)
+            setWrites(Array.isArray(data.writes) ? data.writes : [])
+          } catch {
+            /* the guard is optional; a missing host must not break the panel */
+          }
+        }, [])
+
         React.useEffect(() => {
           let alive = true
           ;(async () => {
             try {
+              await refreshGuard()
               const data = await callHost({ op: 'status' })
               if (!alive || !data.connected) return
               setConn({ host: data.host, port: String(data.port), unitId: String(data.unitId) })
@@ -537,6 +569,10 @@ window.__ModuleLoader__.load({
         }
 
         const writeRow = async (address) => {
+          if (readOnly) {
+            setError(t('poll.guardOn'))
+            return
+          }
           const value = parseWrite(drafts[address], registerView ? view.type : 'u16')
           if (value === null) {
             setError(t('poll.invalidValue'))
@@ -562,29 +598,51 @@ window.__ModuleLoader__.load({
             setError('')
             flash(t('poll.writeOk'))
             await readNow()
+            await refreshGuard()
           } catch (failure) {
             setError(messageOf(failure))
           }
         }
 
         const toggleBit = async (row, bit) => {
+          if (readOnly) {
+            setError(t('poll.guardOn'))
+            return
+          }
           const on = (((row.raw || [])[0] || 0) >> bit) & 1
           try {
             await callHost({ op: 'write-bit', address: row.address, bit, value: on ? 0 : 1 })
             setError('')
             flash(t('poll.writeOk'))
             await readNow()
+            await refreshGuard()
           } catch (failure) {
             setError(messageOf(failure))
           }
         }
 
         const toggleCoil = async (row) => {
+          if (readOnly) {
+            setError(t('poll.guardOn'))
+            return
+          }
           try {
             await callHost({ op: 'write', kind: 'coil', address: row.address, value: row.on ? 0 : 1 })
             setError('')
             flash(t('poll.writeOk'))
             await readNow()
+            await refreshGuard()
+          } catch (failure) {
+            setError(messageOf(failure))
+          }
+        }
+
+        const toggleGuard = async (next) => {
+          try {
+            const data = await callHost({ op: 'set-guard', readOnly: next })
+            setReadOnly(data.readOnly === true)
+            setWrites(Array.isArray(data.writes) ? data.writes : [])
+            flash(next ? t('poll.guardOn') : t('poll.guardOff'))
           } catch (failure) {
             setError(messageOf(failure))
           }
@@ -852,10 +910,60 @@ window.__ModuleLoader__.load({
             { className: 'mbp-hint' },
             stamp ? t('poll.updated') + ' ' + stamp.at.toLocaleTimeString() + ' · ' + String(stamp.latency) + ' ' + t('poll.latency') : '',
           ),
-          error ? h('span', { className: 'mbp-error' }, error) : notice ? h('span', { className: 'mbp-ok' }, notice) : null,
+          h(
+            'span',
+            { className: 'mbp-tablebar-right' },
+            h(
+              'label',
+              { className: 'mbp-guard', title: t('poll.readOnlyLock') },
+              h('input', {
+                type: 'checkbox',
+                checked: readOnly,
+                onChange: (event) => toggleGuard(event.target.checked),
+              }),
+              t('poll.readOnlyLock'),
+            ),
+            error ? h('span', { className: 'mbp-error' }, error) : notice ? h('span', { className: 'mbp-ok' }, notice) : null,
+          ),
         )
 
-        const writable = connected && view.kind === 'holding'
+        const writeLog =
+          writes.length === 0
+            ? null
+            : h(
+                'details',
+                { className: 'mbp-log' },
+                h('summary', null, t('poll.writeLog') + ' (' + writes.length + ')'),
+                h(
+                  'ul',
+                  null,
+                  writes.slice(0, 10).map((entry, index) =>
+                    h(
+                      'li',
+                      { key: index },
+                      h('span', { className: 'mbp-dim' }, new Date(entry.at).toLocaleTimeString() + ' · '),
+                      h(
+                        'span',
+                        { className: 'mbp-dim' },
+                        (entry.source === 'tool' ? t('poll.writeLogTool') : t('poll.writeLogPanel')) + ' · ',
+                      ),
+                      h(
+                        'span',
+                        { className: 'mbp-mono' },
+                        t('poll.address') +
+                          ' ' +
+                          entry.address +
+                          ' = ' +
+                          (Array.isArray(entry.values) && entry.values.length > 0
+                            ? entry.values.join(', ')
+                            : String(entry.value)),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+
+        const writable = connected && view.kind === 'holding' && !readOnly
         const bitCells = (row) => {
           const cells = []
           const word = (row.raw || [])[0] || 0
@@ -976,7 +1084,7 @@ window.__ModuleLoader__.load({
                       {
                         type: 'button',
                         className: 'mbp-btn mbp-btn-ghost mbp-btn-sm',
-                        disabled: !connected,
+                        disabled: !connected || readOnly,
                         onClick: () => toggleCoil(row),
                       },
                       t('poll.toggle'),
@@ -1003,6 +1111,7 @@ window.__ModuleLoader__.load({
               visibleRows.length === 0
                 ? h('p', { className: 'mbp-empty' }, t('poll.empty'))
                 : h('table', { className: 'mbp-table' }, registerView ? registerHead : coilHead, registerView ? registerBody() : coilBody()),
+              writeLog,
             ),
           ),
         )

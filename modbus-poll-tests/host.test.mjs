@@ -9,7 +9,36 @@ import { Readable } from 'node:stream'
 import { apply } from '../modbus-poll/index.js'
 import { createFakeServer } from './fake-server.mjs'
 
-const fake = createFakeServer()
+const fake = createFakeServer({ size: 1024 })
+
+/** Minimal checker for the subset of JSON Schema the tool declares. */
+function assertSchema(schema, value, path = 'result') {
+  if (value === undefined) return
+  const type = schema.type
+  if (type === 'object') {
+    assert.ok(value !== null && typeof value === 'object' && !Array.isArray(value), `${path} must be an object`)
+    for (const key of schema.required || []) assert.ok(key in value, `${path}.${key} is required`)
+    for (const [key, item] of Object.entries(value)) {
+      if (item === undefined) continue
+      const sub = schema.properties && schema.properties[key]
+      if (!sub) {
+        assert.equal(schema.additionalProperties, true, `${path}.${key} is not declared in the output schema`)
+        continue
+      }
+      assertSchema(sub, item, `${path}.${key}`)
+    }
+    return
+  }
+  if (type === 'array') {
+    assert.ok(Array.isArray(value), `${path} must be an array`)
+    value.forEach((item, index) => assertSchema(schema.items || {}, item, `${path}[${index}]`))
+    return
+  }
+  if (type === 'string') return assert.equal(typeof value, 'string', `${path} must be a string`)
+  if (type === 'boolean') return assert.equal(typeof value, 'boolean', `${path} must be a boolean`)
+  if (type === 'integer') return assert.ok(Number.isInteger(value), `${path} must be an integer`)
+  if (type === 'number') return assert.ok(Number.isFinite(value), `${path} must be a number`)
+}
 const port = await fake.listen()
 
 const routes = []
@@ -165,7 +194,7 @@ try {
   assert.equal(badValue.status, 400)
   assert.equal(badValue.json.error.code, 'invalid-parameter')
 
-  const exception = await call({ op: 'read', kind: 'holding', start: 250, count: 20 })
+  const exception = await call({ op: 'read', kind: 'holding', start: 1100, count: 20 })
   assert.equal(exception.status, 502)
   assert.equal(exception.json.error.code, 'modbus-exception')
 
@@ -272,6 +301,93 @@ try {
   assert.ok(watchTimeout.elapsedMs >= 400)
   assert.match(watchTimeout.summary, /expected 999/)
   await assert.rejects(() => tool.execute({ action: 'watch', start: 41 }, {}), /expect/)
+
+  // dump reads past one frame and pages the answer instead of flooding the model.
+  for (let index = 0; index < 300; index += 1) fake.holding[index] = index & 0xffff
+  const dumped = await tool.execute({ action: 'dump', start: 0, count: 300 }, {})
+  assert.equal(dumped.count, 300)
+  assert.equal(dumped.chunks, 3)
+  assert.equal(dumped.rows.length, 200, 'tool returns at most 200 rows')
+  assert.equal(dumped.values.length, 200)
+  assert.match(dumped.summary, /dump holding 0\.\.299: 300 value\(s\) in 3 chunk\(s\)/)
+  assert.match(dumped.summary, /280 more rows in rows\[\]/)
+
+  // A 32-bit dump keeps chunk boundaries aligned to the value width.
+  const floatDump = await tool.execute({ action: 'dump', start: 0, count: 16, type: 'f32', chunk: 125 }, {})
+  assert.equal(floatDump.rows.length, 8)
+  assert.equal(floatDump.chunkSize % 2, 0, 'chunks must not split a 32-bit value')
+
+  // The cap is reported rather than silently applied.
+  const capped = await tool.execute({ action: 'dump', start: 0, count: 5000 }, {})
+  assert.equal(capped.count, 1024)
+  assert.equal(capped.truncated, true)
+
+  // scan-units over a server that only answers unit 7.
+  const scoped = createFakeServer({ units: [7] })
+  const scopedPort = await scoped.listen()
+  try {
+    const scan = await tool.execute(
+      { action: 'scan-units', host: '127.0.0.1', port: scopedPort, from: 5, to: 9, timeoutMs: 80 },
+      {},
+    )
+    assert.equal(scan.scanned, 5)
+    assert.deepEqual(scan.responded, [7], 'only the answering unit is reported')
+    assert.match(scan.summary, /responded: 7/)
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    assert.equal(scoped.connectionCount(), 0, 'timed-out probes must not leak sockets')
+  } finally {
+    await scoped.close()
+  }
+
+  // The read-only guard blocks the agent and the panel, and the log names both.
+  const locked = await call({ op: 'set-guard', readOnly: true })
+  assert.equal(locked.json.readOnly, true)
+  await assert.rejects(() => tool.execute({ action: 'write', address: 5, value: 1 }, {}), /write-protected/)
+  const refusedWrite = await call({ op: 'write', address: 5, value: 1 })
+  assert.equal(refusedWrite.status, 403)
+  assert.equal(refusedWrite.json.error.code, 'write-protected')
+
+  await call({ op: 'set-guard', readOnly: false })
+  await tool.execute({ action: 'write', address: 5, value: 42 }, {})
+  const afterToolWrite = await call({ op: 'guard' })
+  assert.equal(afterToolWrite.json.readOnly, false)
+  assert.equal(afterToolWrite.json.writes[0].source, 'tool')
+  assert.equal(afterToolWrite.json.writes[0].address, 5)
+  assert.deepEqual(afterToolWrite.json.writes[0].values, [42])
+
+  await call({ op: 'write', address: 6, value: 7 })
+  const afterPanelWrite = await call({ op: 'guard' })
+  assert.equal(afterPanelWrite.json.writes[0].source, 'panel')
+  assert.equal(afterPanelWrite.json.writes[0].address, 6)
+
+  const logTool = await tool.execute({ action: 'guard' }, {})
+  assert.ok(logTool.writes.length >= 2)
+  assert.match(logTool.summary, /read-only guard is off/)
+
+  // Every action's real result must satisfy the declared output schema: the
+  // runner rejects undeclared properties, so a missing field breaks a call.
+  assertSchema(tool.output.schema, await tool.execute({ action: 'status' }, {}))
+  assertSchema(tool.output.schema, await tool.execute({ action: 'read', start: 0, count: 2 }, {}))
+  assertSchema(tool.output.schema, await tool.execute({ action: 'read', kind: 'coil', start: 0, count: 4 }, {}))
+  assertSchema(tool.output.schema, await tool.execute({ action: 'write', address: 200, value: 1 }, {}))
+  assertSchema(tool.output.schema, await tool.execute({ action: 'write-bit', address: 200, bit: 1, value: 1 }, {}))
+  assertSchema(
+    tool.output.schema,
+    await tool.execute({ action: 'watch', start: 200, expect: 3, timeoutMs: 200 }, {}),
+  )
+  assertSchema(tool.output.schema, await tool.execute({ action: 'dump', start: 0, count: 40 }, {}))
+  assertSchema(tool.output.schema, await tool.execute({ action: 'dump', kind: 'coil', start: 0, count: 16 }, {}))
+  assertSchema(
+    tool.output.schema,
+    await tool.execute({ action: 'scan-units', from: 1, to: 2, timeoutMs: 80 }, {}),
+  )
+  assertSchema(tool.output.schema, await tool.execute({ action: 'guard' }, {}))
+
+  // A 32-bit read carries width/trailing, which used to be undeclared.
+  assertSchema(
+    tool.output.schema,
+    await tool.execute({ action: 'watch', start: 0, count: 3, type: 'u32', expect: 0, timeoutMs: 100 }, {}),
+  )
 
   // A dropped socket is reported honestly, then reopened on the next action.
   fake.dropConnections()
