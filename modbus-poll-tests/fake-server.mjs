@@ -29,7 +29,11 @@ export function createFakeServer(options = {}) {
     return bytes
   }
 
+  const sockets = new Set()
+
   const server = net.createServer((socket) => {
+    sockets.add(socket)
+    socket.on('close', () => sockets.delete(socket))
     let buffer = Buffer.alloc(0)
     socket.on('data', (chunk) => {
       buffer = Buffer.concat([buffer, chunk])
@@ -132,6 +136,11 @@ export function createFakeServer(options = {}) {
     input,
     coils,
     discrete,
+    /** Drop every open connection, as a network blip would. */
+    dropConnections() {
+      for (const socket of sockets) socket.destroy()
+      sockets.clear()
+    },
     listen() {
       return new Promise((resolve, reject) => {
         server.once('error', reject)

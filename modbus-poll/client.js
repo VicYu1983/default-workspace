@@ -77,6 +77,7 @@ window.__ModuleLoader__.load({
         'poll.on': 'On',
         'poll.off': 'Off',
         'poll.toggle': 'Toggle',
+        'poll.reconnected': 'Reconnected to the server.',
       },
       zh: {
         'poll.title': 'Modbus 讀寫台',
@@ -125,6 +126,7 @@ window.__ModuleLoader__.load({
         'poll.on': '開',
         'poll.off': '關',
         'poll.toggle': '切換',
+        'poll.reconnected': '已重新連線至伺服器。',
       },
     }
 
@@ -443,6 +445,7 @@ window.__ModuleLoader__.load({
             setStamp({ at: new Date(), latency: data.latencyMs })
             setError('')
             failures.current = 0
+            if (data.reconnected) flash(t('poll.reconnected'))
           } catch (failure) {
             setError(messageOf(failure))
             failures.current += 1
@@ -450,21 +453,32 @@ window.__ModuleLoader__.load({
           } finally {
             inflight.current = false
           }
-        }, [view, t])
+        }, [view, t, flash])
 
         const readRef = React.useRef(readNow)
         React.useEffect(() => {
           readRef.current = readNow
         }, [readNow])
 
+        // Serial polling: the next read is scheduled only after the previous one
+        // finished, so a slow device cannot accumulate a queue of stale reads.
         React.useEffect(() => {
           if (!polling || !connected) return undefined
+          let cancelled = false
+          let timer = 0
           const parsed = Number.parseInt(view.interval, 10)
           const interval = Math.min(60000, Math.max(200, Number.isFinite(parsed) ? parsed : 1000))
-          const id = window.setInterval(() => {
-            readRef.current()
-          }, interval)
-          return () => window.clearInterval(id)
+          const tick = async () => {
+            if (cancelled) return
+            await readRef.current()
+            if (cancelled) return
+            timer = window.setTimeout(tick, interval)
+          }
+          timer = window.setTimeout(tick, 0)
+          return () => {
+            cancelled = true
+            window.clearTimeout(timer)
+          }
         }, [polling, connected, view.interval])
 
         React.useEffect(() => {

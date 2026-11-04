@@ -233,6 +233,72 @@ try {
   await assert.rejects(() => tool.execute({ action: 'write', kind: 'discrete', address: 1, value: 1 }, {}), /invalid-parameter/)
   await assert.rejects(() => tool.execute({ action: 'write-bit', address: 1, bit: 16, value: 1 }, {}), /invalid-parameter/)
 
+  // watch returns as soon as the value matches.
+  fake.holding[41] = 7
+  const watchNow = await tool.execute({ action: 'watch', start: 41, expect: 7, timeoutMs: 1000 }, {})
+  assert.equal(watchNow.matched, true)
+  assert.equal(watchNow.attempts, 1)
+  assert.match(watchNow.summary, /matched 7/)
+
+  // watch keeps polling when the value arrives late.
+  globalThis.setTimeout(() => {
+    fake.holding[42] = 9
+  }, 120)
+  const watchLater = await tool.execute(
+    { action: 'watch', start: 42, expect: 9, timeoutMs: 2000, intervalMs: 50 },
+    {},
+  )
+  assert.equal(watchLater.matched, true)
+  assert.ok(watchLater.attempts >= 2, `expected repeated polls, got ${watchLater.attempts}`)
+  assert.ok(watchLater.elapsedMs >= 100)
+
+  // watch compares the scaled engineering value, not the raw register.
+  fake.holding[43] = 235
+  const watchScaled = await tool.execute({ action: 'watch', start: 43, expect: 23.5, scale: 0.1 }, {})
+  assert.equal(watchScaled.matched, true)
+
+  // watch on a coil compares 0/1.
+  fake.coils[10] = true
+  const watchCoil = await tool.execute({ action: 'watch', kind: 'coil', start: 10, expect: 1 }, {})
+  assert.equal(watchCoil.matched, true)
+
+  // A value that never arrives reports a timeout instead of hanging.
+  const watchTimeout = await tool.execute(
+    { action: 'watch', start: 41, expect: 999, timeoutMs: 400, intervalMs: 50 },
+    {},
+  )
+  assert.equal(watchTimeout.matched, false)
+  assert.ok(watchTimeout.attempts >= 2)
+  assert.ok(watchTimeout.elapsedMs >= 400)
+  assert.match(watchTimeout.summary, /expected 999/)
+  await assert.rejects(() => tool.execute({ action: 'watch', start: 41 }, {}), /expect/)
+
+  // A dropped socket is reported honestly, then reopened on the next action.
+  fake.dropConnections()
+  await new Promise((resolve) => setTimeout(resolve, 100))
+  const dropped = await call({ op: 'status' })
+  assert.equal(dropped.json.connected, false, 'a dead socket must not look connected')
+  const resumed = await call({ op: 'read', kind: 'holding', start: 0, count: 2 })
+  assert.equal(resumed.status, 200)
+  assert.equal(resumed.json.reconnected, true)
+  assert.deepEqual(resumed.json.values, fake.holding.slice(0, 2))
+
+  // The agent sees the same reopen, in the summary as well as the field.
+  fake.dropConnections()
+  await new Promise((resolve) => setTimeout(resolve, 100))
+  const toolResumed = await tool.execute({ action: 'read', start: 0, count: 1 }, {})
+  assert.equal(toolResumed.reconnected, true)
+  assert.match(toolResumed.summary, /^\(reconnected\)/)
+
+  // After an explicit disconnect the target is forgotten: no silent reopen.
+  const afterDisconnect = await tool.execute({ action: 'disconnect' }, {})
+  assert.equal(afterDisconnect.connected, false)
+  const refused = await call({ op: 'read', kind: 'holding', start: 0, count: 1 })
+  assert.equal(refused.status, 409)
+  assert.equal(refused.json.error.code, 'not-connected')
+  const reconnected = await call({ op: 'connect', host: '127.0.0.1', port, unitId: 1 })
+  assert.equal(reconnected.json.connected, true)
+
   await assert.rejects(() => tool.execute({ action: 'read', start: 1, count: 0 }, {}), /invalid-parameter/)
   await assert.rejects(() => tool.execute({ action: 'bogus' }, {}), /unknown action/)
 

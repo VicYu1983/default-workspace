@@ -16,6 +16,7 @@ import {
   normalizeScaling,
   normalizeType,
   normalizeWordOrder,
+  typeWidth,
 } from './types.js'
 
 const ROUTE_PATH = '/modbus-poll/api'
@@ -32,9 +33,9 @@ const TOOL_PARAMETERS = {
   properties: {
     action: {
       type: 'string',
-      enum: ['status', 'connect', 'disconnect', 'read', 'write', 'write-bit'],
+      enum: ['status', 'connect', 'disconnect', 'read', 'write', 'write-bit', 'watch'],
       description:
-        'status returns the live connection; connect opens or reuses one; disconnect closes it; read reads registers or bits; write writes registers or coils; write-bit toggles one bit of a holding register.',
+        'status returns the live connection; connect opens or reuses one; disconnect closes it; read reads registers or bits; write writes registers or coils; write-bit toggles one bit of a holding register; watch polls one value until it equals expect, or times out.',
     },
     host: { type: 'string', description: 'Server host name or IP. Required for connect.' },
     port: { type: 'integer', description: 'TCP port, default 502.' },
@@ -74,6 +75,17 @@ const TOOL_PARAMETERS = {
       description: 'Batch write: register words or coil states, starting at address.',
     },
     bit: { type: 'integer', description: 'Bit index 0-15 for action write-bit.' },
+    expect: {
+      type: 'number',
+      description:
+        'Value action watch waits for, after type/scale/offset are applied (0 or 1 for coil/discrete).',
+    },
+    tolerance: {
+      type: 'number',
+      description: 'Absolute tolerance for watch (default 0; f32 defaults to a small relative epsilon).',
+    },
+    timeoutMs: { type: 'integer', description: 'watch deadline in ms, 100-60000 (default 5000).' },
+    intervalMs: { type: 'integer', description: 'watch poll interval in ms, 50-5000 (default 200).' },
   },
 }
 
@@ -115,6 +127,11 @@ const TOOL_OUTPUT_SCHEMA = {
     bit: { type: 'integer' },
     before: { type: 'integer' },
     after: { type: 'integer' },
+    expect: { type: 'number' },
+    matched: { type: 'boolean' },
+    attempts: { type: 'integer' },
+    elapsedMs: { type: 'integer' },
+    reconnected: { type: 'boolean' },
     latencyMs: { type: 'integer' },
   },
 }
@@ -122,11 +139,36 @@ const TOOL_OUTPUT_SCHEMA = {
 const TOOL_DESCRIPTION =
   'Read and write Modbus TCP registers and coils on a server, using the same connection as the Modbus Poll panel. ' +
   'Call action "connect" first (host, port, unitId), then action "read" (kind, start, count, type, wordOrder, scale, offset) ' +
-  'or action "write" (address, value or values) or action "write-bit" (address, bit, value). ' +
-  'Writes change the server immediately. action "status" reports the live connection without touching the wire; action "disconnect" closes it.'
+  'or action "write" (address, value or values) or action "write-bit" (address, bit, value), ' +
+  'or action "watch" (start, expect, timeoutMs) to wait until a value settles. ' +
+  'Writes change the server immediately. A dead socket is reopened automatically on the next action. ' +
+  'action "status" reports the live connection without touching the wire; action "disconnect" closes it.'
 
 function hex4(value) {
   return '0x' + value.toString(16).toUpperCase().padStart(4, '0')
+}
+
+function clamp(value, min, max) {
+  if (!Number.isFinite(value)) return min
+  return Math.min(max, Math.max(min, value))
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** Does one read result satisfy `expect`? Registers compare the decoded value. */
+function matches(result, expect, tolerance) {
+  if (Array.isArray(result.bits)) {
+    return (result.bits[0] ? 1 : 0) === expect
+  }
+  const row = result.rows && result.rows[0]
+  if (!row) {
+    throw new ModbusError('watch needs at least one decoded value', 'invalid-parameter', {
+      field: 'count',
+    })
+  }
+  return Math.abs(row.value - expect) <= tolerance
 }
 
 function normalizeKind(value) {
@@ -167,7 +209,7 @@ const HTTP_STATUS = {
 export const inject = ['webServer', 'tools']
 
 export function apply(ctx) {
-  const state = { client: null, lastError: null }
+  const state = { client: null, target: null, lastError: null, reopening: null }
 
   function describe() {
     const client = state.client
@@ -200,6 +242,7 @@ export function apply(ctx) {
     const current = state.client
     if (current && !current.closed && current.host === host && current.port === port) {
       current.unitId = unitId
+      state.target = { host, port, unitId }
       state.lastError = null
       return
     }
@@ -209,22 +252,55 @@ export function apply(ctx) {
     const client = new ModbusTcpClient({ host, port, unitId, timeoutMs: REQUEST_TIMEOUT_MS })
     await client.open()
     state.client = client
+    state.target = { host, port, unitId }
     state.lastError = null
   }
 
-  function requireClient(body) {
-    const client = state.client
-    if (!client || client.closed) {
+  /**
+   * Return a usable client, reopening the last target if the socket died.
+   *
+   * A polling console lives through short network blips; failing the read is
+   * less useful than reconnecting to the same server. The caller learns a
+   * reopen happened through `reconnected`, so it can say so instead of
+   * pretending nothing changed.
+   */
+  async function ensureClient(body) {
+    const unitId = body.unitId === undefined ? undefined : Number(body.unitId)
+    if (unitId !== undefined && (!Number.isInteger(unitId) || unitId < 0 || unitId > 255)) {
+      throw new ModbusError('unitId must be an integer in 0..255', 'invalid-parameter', { field: 'unitId' })
+    }
+
+    const current = state.client
+    if (current && !current.closed) {
+      if (unitId !== undefined) current.unitId = unitId
+      return { client: current, reconnected: false }
+    }
+
+    const target = state.target
+    if (!target) {
       throw new ModbusError('not connected to a Modbus server', 'not-connected')
     }
-    const unitId = body.unitId === undefined ? undefined : Number(body.unitId)
-    if (unitId !== undefined) {
-      if (!Number.isInteger(unitId) || unitId < 0 || unitId > 255) {
-        throw new ModbusError('unitId must be an integer in 0..255', 'invalid-parameter', { field: 'unitId' })
-      }
-      client.unitId = unitId
+
+    if (!state.reopening) {
+      state.reopening = (async () => {
+        const next = new ModbusTcpClient({
+          host: target.host,
+          port: target.port,
+          unitId: unitId ?? target.unitId,
+          timeoutMs: REQUEST_TIMEOUT_MS,
+        })
+        await next.open()
+        state.client = next
+        state.lastError = null
+        return next
+      })().finally(() => {
+        state.reopening = null
+      })
     }
-    return client
+
+    const client = await state.reopening
+    if (unitId !== undefined) client.unitId = unitId
+    return { client, reconnected: true }
   }
 
   async function readRegistersOrBits(client, body) {
@@ -330,6 +406,53 @@ export function apply(ctx) {
     return { address, bit, value: enabled ? 1 : 0, before, after }
   }
 
+  /**
+   * Poll one value until it matches `expect`, or the deadline passes.
+   *
+   * `watch` is what lets an agent prove a write took effect instead of
+   * reporting success as soon as the frame left.
+   */
+  async function watchValue(body) {
+    const expect = Number(body.expect)
+    if (!Number.isFinite(expect)) {
+      throw new ModbusError('expect must be a finite number', 'invalid-parameter', { field: 'expect' })
+    }
+    const type = normalizeType(body.type)
+    const timeoutMs = clamp(Number(body.timeoutMs ?? 5000), 100, 60000)
+    const intervalMs = clamp(Number(body.intervalMs ?? 200), 50, 5000)
+    const tolerance =
+      body.tolerance === undefined ? (type === 'f32' ? 1e-6 * Math.max(1, Math.abs(expect)) : 0) : Number(body.tolerance)
+    if (!Number.isFinite(tolerance) || tolerance < 0) {
+      throw new ModbusError('tolerance must be a non-negative number', 'invalid-parameter', { field: 'tolerance' })
+    }
+
+    const began = Date.now()
+    let attempts = 0
+    let last = null
+    for (;;) {
+      attempts += 1
+      last = await dispatch({
+        op: 'read',
+        kind: body.kind,
+        start: body.start,
+        count: body.count ?? typeWidth(type),
+        unitId: body.unitId,
+        type: body.type,
+        wordOrder: body.wordOrder,
+        scale: body.scale,
+        offset: body.offset,
+      })
+      if (matches(last, expect, tolerance)) {
+        return { ...last, expect, matched: true, attempts, elapsedMs: Date.now() - began }
+      }
+      const remaining = timeoutMs - (Date.now() - began)
+      if (remaining <= 0) {
+        return { ...last, expect, matched: false, attempts, elapsedMs: Date.now() - began }
+      }
+      await sleep(Math.min(intervalMs, remaining))
+    }
+  }
+
   async function dispatch(body) {
     const op = String(body.op ?? '')
     switch (op) {
@@ -341,23 +464,29 @@ export function apply(ctx) {
       case 'disconnect':
         if (state.client) state.client.close()
         state.client = null
+        state.target = null
         state.lastError = null
         return describe()
       case 'read': {
-        const client = requireClient(body)
-        return readRegistersOrBits(client, body)
+        const { client, reconnected } = await ensureClient(body)
+        const result = await readRegistersOrBits(client, body)
+        return reconnected ? { ...result, reconnected: true } : result
       }
       case 'write': {
-        const client = requireClient(body)
-        return writeValue(client, body)
+        const { client, reconnected } = await ensureClient(body)
+        const result = await writeValue(client, body)
+        return reconnected ? { ...result, reconnected: true } : result
       }
       case 'write-bit': {
-        const client = requireClient(body)
-        return writeBit(client, body)
+        const { client, reconnected } = await ensureClient(body)
+        const result = await writeBit(client, body)
+        return reconnected ? { ...result, reconnected: true } : result
       }
+      case 'watch':
+        return watchValue(body)
       default:
         throw new ModbusError(
-          `unknown operation ${JSON.stringify(op)}; use status, connect, disconnect, read, write or write-bit`,
+          `unknown operation ${JSON.stringify(op)}; use status, connect, disconnect, read, write, write-bit or watch`,
           'invalid-parameter',
           { field: 'op' },
         )
@@ -477,8 +606,12 @@ export function apply(ctx) {
     )
   }
 
-  function writeSummary(written) {
-    if (written.kind === 'coil') {
+  /** Say so when a request had to reopen the socket, instead of hiding it. */
+  function noteReconnect(summary, result) {
+    return result && result.reconnected ? `(reconnected) ${summary}` : summary
+  }
+
+  function writeSummary(written) {    if (written.kind === 'coil') {
       return written.count === undefined
         ? `wrote coil ${written.address} = ${written.value}`
         : `wrote ${written.count} coil(s) from ${written.address}`
@@ -529,19 +662,20 @@ export function apply(ctx) {
         if (result.bits) {
           return {
             action,
-            summary: bitSummary(result),
+            summary: noteReconnect(bitSummary(result), result),
             connected: true,
             ...connectionFields(),
             kind: result.kind,
             start: result.start,
             count: result.count,
             bits: result.bits,
+            reconnected: result.reconnected === true,
             latencyMs: result.latencyMs,
           }
         }
         return {
           action,
-          summary: registerSummary(result),
+          summary: noteReconnect(registerSummary(result), result),
           connected: true,
           ...connectionFields(),
           kind: result.kind,
@@ -553,6 +687,7 @@ export function apply(ctx) {
           offset: result.offset,
           values: result.values,
           rows: result.rows,
+          reconnected: result.reconnected === true,
           latencyMs: result.latencyMs,
         }
       }
@@ -570,7 +705,7 @@ export function apply(ctx) {
         })
         return {
           action,
-          summary: writeSummary(written),
+          summary: noteReconnect(writeSummary(written), written),
           connected: true,
           ...connectionFields(),
           ...written,
@@ -584,20 +719,47 @@ export function apply(ctx) {
           value: args.value,
           unitId: args.unitId,
         })
-        const state = written.value ? 'set' : 'cleared'
+        const verb = written.value ? 'set' : 'cleared'
         return {
           action,
           summary:
-            `${state} bit ${written.bit} of holding register ${written.address} ` +
+            `${verb} bit ${written.bit} of holding register ${written.address} ` +
             `(${hex4(written.before)} -> ${hex4(written.after)})`,
           connected: true,
           ...connectionFields(),
           ...written,
         }
       }
+      case 'watch': {
+        const result = await dispatch({
+          op: 'watch',
+          kind: args.kind,
+          start: args.start,
+          count: args.count,
+          unitId: args.unitId,
+          type: args.type,
+          wordOrder: args.wordOrder,
+          scale: args.scale,
+          offset: args.offset,
+          expect: args.expect,
+          tolerance: args.tolerance,
+          timeoutMs: args.timeoutMs,
+          intervalMs: args.intervalMs,
+        })
+        const where = Array.isArray(result.bits)
+          ? `${result.kind} ${result.start}`
+          : `${result.kind} register ${result.start}`
+        const current = Array.isArray(result.bits)
+          ? String(result.bits[0] ? 1 : 0)
+          : String(result.rows && result.rows[0] ? result.rows[0].text : '?')
+        const summary = result.matched
+          ? `watch ${where}: matched ${String(result.expect)} as ${current} after ${result.attempts} attempt(s) in ${result.elapsedMs} ms`
+          : `watch ${where}: still ${current} after ${result.elapsedMs} ms (${result.attempts} attempt(s)), expected ${String(result.expect)}`
+        return { action, summary: noteReconnect(summary, result), connected: true, ...connectionFields(), ...result }
+      }
       default:
         throw new ModbusError(
-          `unknown action ${JSON.stringify(action)}; use status, connect, disconnect, read, write or write-bit`,
+          `unknown action ${JSON.stringify(action)}; use status, connect, disconnect, read, write, write-bit or watch`,
           'invalid-parameter',
           { field: 'action' },
         )

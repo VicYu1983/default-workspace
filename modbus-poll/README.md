@@ -10,11 +10,12 @@ DSH 的 Modbus TCP 讀寫外掛。側邊欄提供可設定連線與資料型別�
 - **位元檢視**：每個 16 位元暫存器展開 16 格，點擊即 toggle（先讀、改位元、再寫回），不需手算遮罩。
 - **線圈與離散輸入**：`FC01` / `FC02` 讀取，線圈可一鍵切換（`FC05`）。
 - **批次寫入**：`FC15` 多筆線圈、`FC16` 多筆暫存器；32 位型別的值會自動以兩筆暫存器寫入。
-- **輪詢**：可調間隔，請求序列化且不會堆積（同一時間僅一個讀取在飛）。
+- **輪詢**：可調間隔；序列化執行，讀完才排下一次，慢設備不會堆積過期讀取。
+- **自動重連**：socket 斷線後，下一次讀寫會自動重連同一個目標，面板顯示「已重新連線」；明確按「中斷」後就不再自動連線。
 - **設定持久化**：連線參數、資料表選項、已存裝置都存在瀏覽器 `localStorage`（`dsh.modbus-poll/v1`）。
 - **已存裝置**：把 `host:port / 站號` 存成 preset，一鍵切回（切換時會先中斷目前連線，避免顯示不實的位址）。
 - **值變動提示**：與上一輪不同的列會在位址欄閃一下。
-- **Agent 工具**：`modbus_poll`，支援 `status`、`connect`、`disconnect`、`read`、`write`、`write-bit`。
+- **Agent 工具**：`modbus_poll`，支援 `status`、`connect`、`disconnect`、`read`、`write`、`write-bit`、`watch`。
 
 ## 使用
 
@@ -34,10 +35,20 @@ DSH 的 Modbus TCP 讀寫外掛。側邊欄提供可設定連線與資料型別�
 { "action": "write", "address": 10, "value": 23.5, "type": "u16", "scale": 0.1 }
 { "action": "write", "address": 20, "values": [1, 2, 3] }
 { "action": "write-bit", "address": 30, "bit": 4, "value": 1 }
+{ "action": "watch", "start": 30, "expect": 1, "timeoutMs": 3000 }
 { "action": "status" }
 ```
 
 `read` 會回傳原始暫存器（`values`）、解碼後的列（`rows`）與可直接閱讀的 `summary`；位元表則回傳 `bits`。
+
+`watch` 會反覆讀取同一個位址，直到值等於 `expect`（`scale`／`offset` 之後的值）或逾時，回傳 `matched`、`attempts`、`elapsedMs`。這是讓 agent **驗證寫入真的生效**的方法，而不是送出封包就宣稱成功：
+
+```json
+{ "action": "write", "address": 10, "value": 1 }
+{ "action": "watch", "start": 10, "expect": 1, "timeoutMs": 2000 }
+```
+
+浮點值預設帶極小相對容差，也可用 `tolerance` 指定絕對容差。
 
 ## 通訊協定
 
@@ -81,12 +92,15 @@ node modbus-poll-tests/render.test.mjs   # 以最小 hook runtime 實際渲染�
 ```powershell
 node modbus-poll-tools/serve-fake.mjs 15020
 node modbus-poll-tools/query.mjs 127.0.0.1 15020 0 16
+node modbus-poll-tools/demo-watch.mjs   # watch 與自動重連的實際輸出
 ```
 
 ## 限制
 
 - 一次讀取最多 125 個暫存器或 2000 個位元；寫入最多 123 個暫存器或 1968 個線圈。
+- `watch` 最長等 60 秒、最短間隔 50 ms；它是輪詢，不是事件訂閱，逾時請自行重試。
 - 一次只連一台伺服器；切換裝置請先中斷（面板會自動處理）。
+- 自動重連沿用同一個 host/port/站號；換裝置請重新「連線」。
 - 沒有 TLS／序列埠（僅 Modbus TCP）。
 - 寫入立即生效，沒有二次確認；請只對你有權限的設備操作。
 
