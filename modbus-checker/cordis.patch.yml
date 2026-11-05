@@ -1,0 +1,3 @@
+- insert:
+    - id: modbus-checker
+      name: '@local/dsh-plugin-modbus-checker'

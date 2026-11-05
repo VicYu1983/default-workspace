@@ -1,0 +1,658 @@
+{
+  "version": 1,
+  "batches": [
+    {
+      "id": "batch-20261105-102029-znsc",
+      "site": "示範案場",
+      "note": null,
+      "started_at": "2026-11-05T02:20:29.768Z",
+      "finished_at": "2026-11-05T02:20:29.930Z",
+      "duration_ms": 162,
+      "cancelled": false,
+      "summary": {
+        "checked": 4,
+        "pass": 0,
+        "fail": 4,
+        "timeout": 0,
+        "passRate": 0,
+        "totalMs": 466,
+        "slowest": [
+          {
+            "device": "閘道器-01",
+            "elapsed_ms": 140
+          },
+          {
+            "device": "水泵-02",
+            "elapsed_ms": 113
+          },
+          {
+            "device": "設定錯誤-04",
+            "elapsed_ms": 108
+          },
+          {
+            "device": "攝影機-03",
+            "elapsed_ms": 105
+          }
+        ],
+        "avgModbusMs": null,
+        "byErrorType": [
+          {
+            "type": "TCP_FAILED",
+            "count": 4
+          }
+        ],
+        "issues": [
+          {
+            "device": "水泵-02",
+            "ip": "127.0.0.1",
+            "status": "FAIL",
+            "error_type": "TCP_FAILED",
+            "failed_stage": "tcp",
+            "diagnosis": "TCP 15030 無法連線，可能是服務未啟動、埠號錯誤或設備不在線"
+          },
+          {
+            "device": "設定錯誤-04",
+            "ip": "127.0.0.1",
+            "status": "FAIL",
+            "error_type": "TCP_FAILED",
+            "failed_stage": "tcp",
+            "diagnosis": "TCP 15030 無法連線，可能是服務未啟動、埠號錯誤或設備不在線"
+          },
+          {
+            "device": "閘道器-01",
+            "ip": "127.0.0.1",
+            "status": "FAIL",
+            "error_type": "TCP_FAILED",
+            "failed_stage": "tcp",
+            "diagnosis": "TCP 15030 無法連線，可能是服務未啟動、埠號錯誤或設備不在線"
+          },
+          {
+            "device": "攝影機-03",
+            "ip": "127.0.0.1",
+            "status": "FAIL",
+            "error_type": "TCP_FAILED",
+            "failed_stage": "tcp",
+            "diagnosis": "TCP 15030 無法連線，可能是服務未啟動、埠號錯誤或設備不在線"
+          }
+        ]
+      },
+      "results": [
+        {
+          "device_name": "水泵-02",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 10,
+          "plc_address": 40011,
+          "quantity": 1,
+          "check_profile": "full_stack",
+          "expected": "0..100",
+          "status": "FAIL",
+          "error_type": "TCP_FAILED",
+          "error_message": "ECONNREFUSED",
+          "failed_stage": "tcp",
+          "values": [],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": false,
+            "port": 15030,
+            "elapsedMs": 3,
+            "error": "ECONNREFUSED"
+          },
+          "modbus": null,
+          "elapsed_ms": 113,
+          "diagnosis": "TCP 15030 無法連線，可能是服務未啟動、埠號錯誤或設備不在線",
+          "checked_at": "2026-11-05T02:20:29.797Z"
+        },
+        {
+          "device_name": "設定錯誤-04",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 0,
+          "plc_address": 40001,
+          "quantity": 1,
+          "check_profile": "full_stack",
+          "expected": "100",
+          "status": "FAIL",
+          "error_type": "TCP_FAILED",
+          "error_message": "ECONNREFUSED",
+          "failed_stage": "tcp",
+          "values": [],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": false,
+            "port": 15030,
+            "elapsedMs": 1,
+            "error": "ECONNREFUSED"
+          },
+          "modbus": null,
+          "elapsed_ms": 108,
+          "diagnosis": "TCP 15030 無法連線，可能是服務未啟動、埠號錯誤或設備不在線",
+          "checked_at": "2026-11-05T02:20:29.819Z"
+        },
+        {
+          "device_name": "閘道器-01",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 0,
+          "plc_address": 40001,
+          "quantity": 2,
+          "check_profile": "full_stack",
+          "expected": "100,107",
+          "status": "FAIL",
+          "error_type": "TCP_FAILED",
+          "error_message": "ECONNREFUSED",
+          "failed_stage": "tcp",
+          "values": [],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": false,
+            "port": 15030,
+            "elapsedMs": 5,
+            "error": "ECONNREFUSED"
+          },
+          "modbus": null,
+          "elapsed_ms": 140,
+          "diagnosis": "TCP 15030 無法連線，可能是服務未啟動、埠號錯誤或設備不在線",
+          "checked_at": "2026-11-05T02:20:29.769Z"
+        },
+        {
+          "device_name": "攝影機-03",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 0,
+          "plc_address": 40001,
+          "quantity": 1,
+          "check_profile": "ping_tcp",
+          "expected": null,
+          "status": "FAIL",
+          "error_type": "TCP_FAILED",
+          "error_message": "ECONNREFUSED",
+          "failed_stage": "tcp",
+          "values": [],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": false,
+            "port": 15030,
+            "elapsedMs": 2,
+            "error": "ECONNREFUSED"
+          },
+          "modbus": null,
+          "elapsed_ms": 105,
+          "diagnosis": "TCP 15030 無法連線，可能是服務未啟動、埠號錯誤或設備不在線",
+          "checked_at": "2026-11-05T02:20:29.808Z"
+        }
+      ]
+    },
+    {
+      "id": "batch-20261105-090113-nyug",
+      "site": "示範案場",
+      "note": "模擬現場飄移後",
+      "started_at": "2026-11-05T01:01:13.863Z",
+      "finished_at": "2026-11-05T01:01:13.910Z",
+      "duration_ms": 47,
+      "cancelled": false,
+      "summary": {
+        "checked": 4,
+        "pass": 3,
+        "fail": 1,
+        "timeout": 0,
+        "passRate": 75,
+        "totalMs": 145,
+        "slowest": [
+          {
+            "device": "閘道器-01",
+            "elapsed_ms": 37
+          },
+          {
+            "device": "水泵-02",
+            "elapsed_ms": 36
+          },
+          {
+            "device": "設定錯誤-04",
+            "elapsed_ms": 36
+          },
+          {
+            "device": "攝影機-03",
+            "elapsed_ms": 36
+          }
+        ],
+        "avgModbusMs": 1,
+        "byErrorType": [
+          {
+            "type": "UNEXPECTED_VALUE",
+            "count": 1
+          }
+        ],
+        "issues": [
+          {
+            "device": "水泵-02",
+            "ip": "127.0.0.1",
+            "status": "FAIL",
+            "error_type": "UNEXPECTED_VALUE",
+            "failed_stage": null,
+            "diagnosis": "讀值 170 與預期 0..100 不符"
+          }
+        ]
+      },
+      "results": [
+        {
+          "device_name": "水泵-02",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 10,
+          "plc_address": 40011,
+          "quantity": 1,
+          "check_profile": "full_stack",
+          "expected": "0..100",
+          "status": "FAIL",
+          "error_type": "UNEXPECTED_VALUE",
+          "error_message": "expected 0..100",
+          "failed_stage": null,
+          "values": [
+            170
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 15030,
+            "elapsedMs": 1,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 1
+          },
+          "elapsed_ms": 36,
+          "diagnosis": "讀值 170 與預期 0..100 不符",
+          "checked_at": "2026-11-05T01:01:13.867Z"
+        },
+        {
+          "device_name": "設定錯誤-04",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 0,
+          "plc_address": 40001,
+          "quantity": 1,
+          "check_profile": "full_stack",
+          "expected": "100",
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            100
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 15030,
+            "elapsedMs": 1,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 0
+          },
+          "elapsed_ms": 36,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T01:01:13.874Z"
+        },
+        {
+          "device_name": "閘道器-01",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 0,
+          "plc_address": 40001,
+          "quantity": 2,
+          "check_profile": "full_stack",
+          "expected": "100,107",
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            100,
+            107
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 15030,
+            "elapsedMs": 1,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 1
+          },
+          "elapsed_ms": 37,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T01:01:13.863Z"
+        },
+        {
+          "device_name": "攝影機-03",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 0,
+          "plc_address": 40001,
+          "quantity": 1,
+          "check_profile": "ping_tcp",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 15030,
+            "elapsedMs": 1,
+            "error": null
+          },
+          "modbus": null,
+          "elapsed_ms": 36,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T01:01:13.870Z"
+        }
+      ]
+    },
+    {
+      "id": "batch-20261105-090021-ofgk",
+      "site": "示範案場",
+      "note": "POC 第一次基準",
+      "started_at": "2026-11-05T01:00:21.649Z",
+      "finished_at": "2026-11-05T01:00:21.704Z",
+      "duration_ms": 55,
+      "cancelled": false,
+      "summary": {
+        "checked": 4,
+        "pass": 3,
+        "fail": 1,
+        "timeout": 0,
+        "passRate": 75,
+        "totalMs": 165,
+        "slowest": [
+          {
+            "device": "閘道器-01",
+            "elapsed_ms": 47
+          },
+          {
+            "device": "水泵-02",
+            "elapsed_ms": 40
+          },
+          {
+            "device": "設定錯誤-04",
+            "elapsed_ms": 40
+          },
+          {
+            "device": "攝影機-03",
+            "elapsed_ms": 38
+          }
+        ],
+        "avgModbusMs": 2,
+        "byErrorType": [
+          {
+            "type": "UNEXPECTED_VALUE",
+            "count": 1
+          }
+        ],
+        "issues": [
+          {
+            "device": "設定錯誤-04",
+            "ip": "127.0.0.1",
+            "status": "FAIL",
+            "error_type": "UNEXPECTED_VALUE",
+            "failed_stage": null,
+            "diagnosis": "讀值 100 與預期 999 不符"
+          }
+        ]
+      },
+      "results": [
+        {
+          "device_name": "水泵-02",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 10,
+          "plc_address": 40011,
+          "quantity": 1,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            170
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 15030,
+            "elapsedMs": 1,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 2
+          },
+          "elapsed_ms": 40,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T01:00:21.657Z"
+        },
+        {
+          "device_name": "設定錯誤-04",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 0,
+          "plc_address": 40001,
+          "quantity": 1,
+          "check_profile": "full_stack",
+          "expected": "999",
+          "status": "FAIL",
+          "error_type": "UNEXPECTED_VALUE",
+          "error_message": "expected 999",
+          "failed_stage": null,
+          "values": [
+            100
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 15030,
+            "elapsedMs": 1,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 1
+          },
+          "elapsed_ms": 40,
+          "diagnosis": "讀值 100 與預期 999 不符",
+          "checked_at": "2026-11-05T01:00:21.664Z"
+        },
+        {
+          "device_name": "閘道器-01",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 0,
+          "plc_address": 40001,
+          "quantity": 2,
+          "check_profile": "full_stack",
+          "expected": "100,107",
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            100,
+            107
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 15030,
+            "elapsedMs": 1,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 4
+          },
+          "elapsed_ms": 47,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T01:00:21.650Z"
+        },
+        {
+          "device_name": "攝影機-03",
+          "ip": "127.0.0.1",
+          "port": 15030,
+          "unit_id": 1,
+          "function": "03",
+          "address": 0,
+          "plc_address": 40001,
+          "quantity": 1,
+          "check_profile": "ping_tcp",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 15030,
+            "elapsedMs": 1,
+            "error": null
+          },
+          "modbus": null,
+          "elapsed_ms": 38,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T01:00:21.661Z"
+        }
+      ]
+    }
+  ],
+  "baselines": {
+    "示範案場": "batch-20261105-090113-nyug"
+  }
+}

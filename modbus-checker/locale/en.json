@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Modbus Site Checker",
+    "description": "Check a whole site's devices over Ping, TCP and Modbus TCP, keep regression batches and compare them against a saved baseline."
+  }
+}

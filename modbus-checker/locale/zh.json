@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Modbus 案場檢查",
+    "description": "以 Ping、TCP 與 Modbus TCP 檢查整個案場的設備，保存回歸批次並與基準比較。"
+  }
+}

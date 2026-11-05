@@ -1,0 +1,39 @@
+{
+  "name": "@local/dsh-plugin-modbus-checker",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Site-wide Modbus/Ping/TCP regression checker: agent tools plus a sidebar panel for site summary, one-click checks and baseline comparison.",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./sites": "./sites.js",
+    "./checker": "./checker.js",
+    "./compare": "./compare.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "sites.js",
+    "checker.js",
+    "compare.js",
+    "net.js",
+    "modbus.js",
+    "history.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  }
+}
