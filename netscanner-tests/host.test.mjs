@@ -96,14 +96,15 @@ try {
 
   const started = await call({
     op: 'start',
-    cidr: '127.0.0.1/32',
+    startIp: '127.0.0.1',
+    endIp: '127.0.0.1',
     ports: [port],
     timeoutMs: 800,
     concurrency: 1,
     resolveNames: false,
   })
   assert.equal(started.status, 200)
-  assert.equal(started.json.cidr, '127.0.0.1/32')
+  assert.equal(started.json.cidr, '127.0.0.1-127.0.0.1')
   assert.equal(started.json.total, 1)
 
   const finished = await waitForScan()
@@ -119,6 +120,10 @@ try {
   const badPort = await call({ op: 'start', cidr: '127.0.0.1/32', ports: [0] })
   assert.equal(badPort.status, 400)
   assert.equal(badPort.json.error.code, 'invalid-parameter')
+
+  const backwards = await call({ op: 'start', startIp: '192.168.0.10', endIp: '192.168.0.2' })
+  assert.equal(backwards.status, 400)
+  assert.equal(backwards.json.error.code, 'invalid-target')
 
   const getReply = response()
   const getRequest = Readable.from([])
@@ -138,6 +143,14 @@ try {
   assert.equal(toolScan.hosts[0].via, 'tcp')
   assert.match(toolScan.summary, /scanned 127\.0\.0\.1\/32: 1\/1 host/)
   assert.deepEqual(tool.output.render({}, toolScan), [{ type: 'text', text: toolScan.summary }])
+
+  const toolScanRange = await tool.execute(
+    { action: 'scan', startIp: '127.0.0.1', endIp: '127.0.0.1', ports: [port], resolveNames: false },
+    {},
+  )
+  assert.equal(toolScanRange.aliveCount, 1)
+  assert.deepEqual(toolScanRange.hosts[0].ports, [port])
+  assert.match(toolScanRange.summary, /scanned 127\.0\.0\.1-127\.0\.0\.1/)
 
   const toolStatus = await tool.execute({ action: 'status' }, {})
   assert.equal(toolStatus.phase, 'complete')

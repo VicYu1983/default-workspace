@@ -12,6 +12,7 @@ import {
   listInterfaces,
   parseArpTable,
   parsePorts,
+  parseRange,
   parseTargets,
 } from '../netscanner/scanner.js'
 
@@ -65,6 +66,20 @@ for (const bad of ['', 'not-an-ip', '192.168.1.0/33', '192.168.1.0/7', '192.168.
 }
 assert.throws(() => parseTargets('10.0.0.0/16'), (error) => error.code === 'too-many-hosts')
 
+const range = parseRange('192.168.0.1', '192.168.0.254')
+assert.equal(range.count, 254)
+assert.equal(range.label, '192.168.0.1-192.168.0.254')
+assert.equal(range.hosts[0], '192.168.0.1')
+assert.equal(range.hosts.at(-1), '192.168.0.254')
+assert.equal(parseRange('10.0.0.7', '10.0.0.7').count, 1)
+assert.throws(() => parseRange('192.168.0.10', '192.168.0.2'), (error) => error.code === 'invalid-target')
+assert.throws(() => parseRange('bogus', '10.0.0.1'), (error) => error.code === 'invalid-target')
+assert.throws(() => parseRange('10.0.0.1', 'not-an-ip'), (error) => error.code === 'invalid-target')
+assert.throws(
+  () => parseRange('10.0.0.0', '10.1.255.255'),
+  (error) => error.code === 'too-many-hosts',
+)
+
 assert.deepEqual(parsePorts([443, 80, 443]), [80, 443])
 assert.deepEqual(parsePorts('80,443 8000-8002'), [80, 443, 8000, 8001, 8002])
 assert.deepEqual(parsePorts(undefined).length, 10)
@@ -115,6 +130,22 @@ try {
   assert.deepEqual(done.results[0].ports, [openPort])
   assert.ok(Number.isInteger(done.results[0].latencyMs))
   assert.equal(done.results[0].via, 'tcp')
+
+  // The panel's form sends an explicit start/end IP pair.
+  const ranged = await scanner.start({
+    startIp: '127.0.0.1',
+    endIp: '127.0.0.1',
+    ports: [openPort],
+    timeoutMs: 800,
+    concurrency: 1,
+    resolveNames: false,
+  })
+  assert.equal(ranged.total, 1)
+  assert.equal(ranged.cidr, '127.0.0.1-127.0.0.1')
+  const rangedDone = await scanner.waitForIdle(10000)
+  assert.equal(rangedDone.phase, 'complete')
+  assert.equal(rangedDone.aliveCount, 1)
+  assert.equal(rangedDone.results[0].via, 'tcp')
 
   // A live neighbour whose firewall drops every TCP probe still leaves an ARP
   // entry; the scan must report it as `via: 'arp'` instead of dropping it.

@@ -20,9 +20,9 @@ window.__ModuleLoader__.load({
       en: {
         'nsc.title': 'Network Scanner',
         'nsc.subtitle': 'Discover hosts and open ports with TCP probes and the ARP cache.',
-        'nsc.target': 'Scan target',
-        'nsc.targetPlaceholder': '192.168.1.0/24 or 192.168.1.10-50',
-        'nsc.targetHint': 'CIDR, address range, wildcard (192.168.1.*) or a single IP.',
+        'nsc.targetStart': 'Start IP',
+        'nsc.targetEnd': 'End IP',
+        'nsc.targetHint': 'Every address from start to end is scanned, endpoints included.',
         'nsc.targetCount': '{count} addresses will be scanned.',
         'nsc.targetTooLarge': 'A scan can cover at most 4096 addresses.',
         'nsc.localSubnets': 'This host',
@@ -73,7 +73,7 @@ window.__ModuleLoader__.load({
         'nsc.emptyRunning': 'Scanning… responsive hosts will appear here.',
         'nsc.emptyDone': 'No responsive hosts were found on this segment.',
         'nsc.emptyFilter': 'No host matches this filter.',
-        'nsc.invalidTarget': 'Enter a valid target, for example 192.168.1.0/24.',
+        'nsc.invalidTarget': 'Enter a valid start and end IP.',
         'nsc.invalidPorts': 'Ports must be 1–65535 and at most 32 entries.',
         'nsc.scanStarted': 'Scan started.',
         'nsc.scanStopped': 'Scan stopped.',
@@ -85,9 +85,9 @@ window.__ModuleLoader__.load({
       zh: {
         'nsc.title': '網段掃描器',
         'nsc.subtitle': '以 TCP 與 ARP 探索網段，找出主機與開放的連接埠。',
-        'nsc.target': '掃描網段',
-        'nsc.targetPlaceholder': '192.168.1.0/24 或 192.168.1.10-50',
-        'nsc.targetHint': '支援 CIDR、起訖範圍、萬用字元（192.168.1.*）或單一 IP。',
+        'nsc.targetStart': '起始 IP',
+        'nsc.targetEnd': '結束 IP',
+        'nsc.targetHint': '掃描起始與結束之間的每個位址（含端點）。',
         'nsc.targetCount': '將掃描 {count} 個位址。',
         'nsc.targetTooLarge': '一次最多掃描 4096 個位址。',
         'nsc.localSubnets': '本機網段',
@@ -138,7 +138,7 @@ window.__ModuleLoader__.load({
         'nsc.emptyRunning': '掃描中…有回應的主機會陸續出現。',
         'nsc.emptyDone': '這個網段沒有找到有回應的主機。',
         'nsc.emptyFilter': '沒有符合篩選條件的主機。',
-        'nsc.invalidTarget': '請輸入有效的網段，例如 192.168.1.0/24。',
+        'nsc.invalidTarget': '請輸入有效的起始與結束 IP。',
         'nsc.invalidPorts': '連接埠需為 1–65535，最多 32 個。',
         'nsc.scanStarted': '掃描已開始。',
         'nsc.scanStopped': '掃描已停止。',
@@ -169,6 +169,8 @@ window.__ModuleLoader__.load({
 .nsc-row-target { align-items:stretch; }
 .nsc-field { display:flex; flex-direction:column; gap:4px; min-width:0; }
 .nsc-field-target { flex:1 1 320px; }
+.nsc-field-ip { flex:1 1 150px; }
+.nsc-target-dash { align-self:flex-end; padding:0 1px 7px; color:var(--dsw-alias-label-secondary); font-size:12px; }
 .nsc-label { font-size:11px; color:var(--dsw-alias-label-secondary); }
 .nsc-input { box-sizing:border-box; height:28px; border-radius:6px; border:1px solid var(--dsw-alias-border-l1); background:var(--dsw-alias-bg-base); color:var(--dsw-alias-label-primary); font:inherit; font-size:12px; padding:0 8px; outline:none; }
 .nsc-input:focus { border-color:var(--dsw-alias-brand-primary); }
@@ -242,7 +244,9 @@ window.__ModuleLoader__.load({
     ]
 
     const DEFAULTS = {
-      cidr: '',
+      // Usable host range of 192.168.0.0/24.
+      startIp: '192.168.0.1',
+      endIp: '192.168.0.254',
       preset: 'standard',
       portsText: '',
       timeoutMs: '700',
@@ -320,38 +324,36 @@ window.__ModuleLoader__.load({
       return ((octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3]) >>> 0
     }
 
-    function previewTarget(text) {
+    function previewRange(startText, endText) {
+      const start = ipv4ToInt(startText)
+      const end = ipv4ToInt(endText)
+      if (start === null || end === null || start > end) return { ok: false, count: 0 }
+      return { ok: true, count: end - start + 1 }
+    }
+
+    /**
+     * Usable host range of a CIDR, for filling the two IP fields from a
+     * local-subnet chip. Returns null for anything that is not a valid CIDR.
+     */
+    function cidrToRange(text) {
       const raw = String(text == null ? '' : text).trim()
-      if (raw === '') return { ok: false, count: 0 }
-      if (raw.includes('/')) {
-        const slash = raw.indexOf('/')
-        const ip = raw.slice(0, slash).trim()
-        const prefixText = raw.slice(slash + 1).trim()
-        if (!parseIpv4(ip) || !/^\d{1,2}$/.test(prefixText)) return { ok: false, count: 0 }
-        const prefix = Number.parseInt(prefixText, 10)
-        if (prefix < 8 || prefix > 32) return { ok: false, count: 0 }
-        return { ok: true, count: prefix >= 31 ? 2 ** (32 - prefix) : 2 ** (32 - prefix) - 2 }
-      }
-      if (/^(\d{1,3}\.){3}\d{1,3}\s*-\s*(\d{1,3}\.){3}\d{1,3}$/.test(raw)) {
-        const [startText, endText] = raw.split('-').map((part) => part.trim())
-        const start = ipv4ToInt(startText)
-        const end = ipv4ToInt(endText)
-        if (start === null || end === null || start > end) return { ok: false, count: 0 }
-        return { ok: true, count: end - start + 1 }
-      }
-      if (/^(\d{1,3}\.){3}\d{1,3}\s*-\s*\d{1,3}$/.test(raw)) {
-        const [startText, endText] = raw.split('-').map((part) => part.trim())
-        const octets = parseIpv4(startText)
-        const last = Number.parseInt(endText, 10)
-        if (!octets || !/^\d{1,3}$/.test(endText) || last < octets[3] || last > 255) {
-          return { ok: false, count: 0 }
-        }
-        return { ok: true, count: last - octets[3] + 1 }
-      }
-      if (/^(\d{1,3}\.){3}\*$/.test(raw)) {
-        return parseIpv4(raw.slice(0, -1) + '0') ? { ok: true, count: 254 } : { ok: false, count: 0 }
-      }
-      return parseIpv4(raw) ? { ok: true, count: 1 } : { ok: false, count: 0 }
+      const slash = raw.indexOf('/')
+      if (slash < 0) return null
+      const ip = raw.slice(0, slash).trim()
+      const prefixText = raw.slice(slash + 1).trim()
+      const octets = parseIpv4(ip)
+      if (!octets || !/^\d{1,2}$/.test(prefixText)) return null
+      const prefix = Number.parseInt(prefixText, 10)
+      if (prefix < 8 || prefix > 32) return null
+      const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0
+      const address = ipv4ToInt(ip)
+      const network = (address & mask) >>> 0
+      const broadcast = (network | (~mask >>> 0)) >>> 0
+      const first = prefix >= 31 ? network : network + 1
+      const last = prefix >= 31 ? broadcast : broadcast - 1
+      const toIp = (value) =>
+        `${(value >>> 24) & 255}.${(value >>> 16) & 255}.${(value >>> 8) & 255}.${value & 255}`
+      return { start: toIp(first), end: toIp(last), count: last - first + 1 }
     }
 
     function parsePortsText(text) {
@@ -385,8 +387,22 @@ window.__ModuleLoader__.load({
         const raw = window.localStorage.getItem(STORAGE_KEY)
         if (!raw) return fallback
         const saved = JSON.parse(raw)
+        let startIp = fallback.startIp
+        let endIp = fallback.endIp
+        if (typeof saved.startIp === 'string' && parseIpv4(saved.startIp)) startIp = saved.startIp
+        if (typeof saved.endIp === 'string' && parseIpv4(saved.endIp)) endIp = saved.endIp
+        if (startIp === fallback.startIp && endIp === fallback.endIp && typeof saved.cidr === 'string') {
+          // Migration: the form used to store one CIDR target; keep the user's
+          // last target by converting it to a start/end pair once.
+          const range = cidrToRange(saved.cidr)
+          if (range) {
+            startIp = range.start
+            endIp = range.end
+          }
+        }
         return {
-          cidr: typeof saved.cidr === 'string' ? saved.cidr : fallback.cidr,
+          startIp,
+          endIp,
           preset: PRESETS.some((preset) => preset.id === saved.preset) ? saved.preset : fallback.preset,
           portsText: typeof saved.portsText === 'string' ? saved.portsText : fallback.portsText,
           // 450 ms was the old default and is too aggressive for sleeping Wi-Fi
@@ -548,9 +564,11 @@ window.__ModuleLoader__.load({
               setInterfaces(list)
               setInterfacesLoaded(true)
               if (list.length > 0) {
-                setForm((current) =>
-                  current.cidr.trim() === '' ? { ...current, cidr: list[0].cidr } : current,
-                )
+                setForm((current) => {
+                  if (current.startIp.trim() !== '' && current.endIp.trim() !== '') return current
+                  const range = cidrToRange(list[0].cidr)
+                  return range ? { ...current, startIp: range.start, endIp: range.end } : current
+                })
               }
             } catch {
               /* local subnets are a convenience only */
@@ -604,7 +622,7 @@ window.__ModuleLoader__.load({
         const preset = PRESETS.find((entry) => entry.id === form.preset) || PRESETS[1]
         const custom = parsePortsText(form.portsText)
         const ports = form.preset === 'custom' ? custom.ports : preset.ports
-        const preview = previewTarget(form.cidr)
+        const preview = previewRange(form.startIp, form.endIp)
 
         const start = async () => {
           setError('')
@@ -627,7 +645,8 @@ window.__ModuleLoader__.load({
             const concurrencyText = form.concurrency.trim()
             const data = await callHost({
               op: 'start',
-              cidr: form.cidr.trim(),
+              startIp: form.startIp.trim(),
+              endIp: form.endIp.trim(),
               ports,
               timeoutMs: timeoutText === '' ? undefined : Number(timeoutText),
               concurrency: concurrencyText === '' ? undefined : Number(concurrencyText),
@@ -677,14 +696,24 @@ window.__ModuleLoader__.load({
             hint || null,
           )
 
-        const targetInput = h('input', {
-          id: 'nsc-target',
+        const startInput = h('input', {
+          id: 'nsc-target-start',
           className: 'nsc-input nsc-input-target',
-          value: form.cidr,
-          placeholder: t('nsc.targetPlaceholder'),
+          value: form.startIp,
+          placeholder: '192.168.0.1',
           spellCheck: false,
           disabled: running,
-          onChange: (event) => setField('cidr', event.target.value),
+          onChange: (event) => setField('startIp', event.target.value),
+        })
+
+        const endInput = h('input', {
+          id: 'nsc-target-end',
+          className: 'nsc-input nsc-input-target',
+          value: form.endIp,
+          placeholder: '192.168.0.254',
+          spellCheck: false,
+          disabled: running,
+          onChange: (event) => setField('endIp', event.target.value),
         })
 
         const targetHint = preview.ok
@@ -699,14 +728,25 @@ window.__ModuleLoader__.load({
 
         const targetRow = h(
           'div',
-          { className: 'nsc-row nsc-row-target' },
+          { className: 'nsc-field nsc-field-target' },
           h(
             'div',
-            { className: 'nsc-field nsc-field-target' },
-            h('label', { className: 'nsc-label', htmlFor: 'nsc-target' }, t('nsc.target')),
-            targetInput,
-            targetHint,
+            { className: 'nsc-row nsc-row-target' },
+            h(
+              'label',
+              { className: 'nsc-field nsc-field-ip' },
+              h('span', { className: 'nsc-label' }, t('nsc.targetStart')),
+              startInput,
+            ),
+            h('span', { className: 'nsc-target-dash', 'aria-hidden': true }, '–'),
+            h(
+              'label',
+              { className: 'nsc-field nsc-field-ip' },
+              h('span', { className: 'nsc-label' }, t('nsc.targetEnd')),
+              endInput,
+            ),
           ),
+          targetHint,
         )
 
         const chips =
@@ -715,21 +755,29 @@ window.__ModuleLoader__.load({
                 'div',
                 { className: 'nsc-chips' },
                 h('span', { className: 'nsc-chips-label' }, t('nsc.localSubnets')),
-                interfaces.map((entry) =>
-                  h(
+                interfaces.map((entry) => {
+                  const range = cidrToRange(entry.cidr)
+                  const active =
+                    range !== null &&
+                    form.startIp.trim() === range.start &&
+                    form.endIp.trim() === range.end
+                  return h(
                     'button',
                     {
                       type: 'button',
                       key: entry.cidr + entry.name,
-                      className: 'nsc-chip' + (form.cidr.trim() === entry.cidr ? ' is-active' : ''),
+                      className: 'nsc-chip' + (active ? ' is-active' : ''),
                       title: entry.address + ' / ' + entry.netmask,
                       disabled: running,
-                      onClick: () => setField('cidr', entry.cidr),
+                      onClick: () => {
+                        if (!range) return
+                        setForm((current) => ({ ...current, startIp: range.start, endIp: range.end }))
+                      },
                     },
                     entry.cidr,
                     h('span', { className: 'nsc-chip-name' }, entry.name),
-                  ),
-                ),
+                  )
+                }),
               )
             : interfacesLoaded
               ? h(

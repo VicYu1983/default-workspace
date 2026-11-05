@@ -30,7 +30,15 @@ const TOOL_PARAMETERS = {
     cidr: {
       type: 'string',
       description:
-        'Target network: CIDR (192.168.1.0/24), range (192.168.1.10-192.168.1.50 or 192.168.1.10-50), wildcard (192.168.1.*), or one IPv4 address. Required for scan.',
+        'Target network: CIDR (192.168.1.0/24), range (192.168.1.10-192.168.1.50 or 192.168.1.10-50), wildcard (192.168.1.*), or one IPv4 address. Use startIp+endIp instead, or this.',
+    },
+    startIp: {
+      type: 'string',
+      description: 'First IPv4 address of an inclusive range, e.g. 192.168.0.1. Use with endIp instead of cidr.',
+    },
+    endIp: {
+      type: 'string',
+      description: 'Last IPv4 address of an inclusive range, e.g. 192.168.0.254. Use with startIp instead of cidr.',
     },
     ports: {
       type: 'array',
@@ -96,7 +104,7 @@ const TOOL_OUTPUT_SCHEMA = {
 
 const TOOL_DESCRIPTION =
   'Scan an IPv4 network segment from the Harness host. ' +
-  'action "scan" takes a CIDR, range or single address (for example 192.168.1.0/24), probes the given TCP ports in parallel, ' +
+  'action "scan" takes an inclusive startIp/endIp pair (for example 192.168.0.1 to 192.168.0.254) or a CIDR, range, wildcard or single address (192.168.1.0/24), probes the given TCP ports in parallel, ' +
   'and returns responsive hosts with reverse-DNS names, ARP MAC addresses and open ports. A refused connection still counts as a response, ' +
   'so hosts without open ports are discovered. Live neighbours with no TCP response are added from the host\'s ARP cache and marked via "arp". ' +
   'action "interfaces" lists the host\'s own subnets; "status" reports progress; "stop" aborts. ' +
@@ -194,6 +202,8 @@ export function apply(ctx) {
       case 'start':
         return scanner.start({
           cidr: body.cidr ?? body.target,
+          startIp: body.startIp,
+          endIp: body.endIp,
           ports: body.ports,
           timeoutMs: body.timeoutMs,
           concurrency: body.concurrency,
@@ -306,6 +316,8 @@ export function apply(ctx) {
       case 'scan': {
         const started = await scanner.start({
           cidr: args.cidr,
+          startIp: args.startIp,
+          endIp: args.endIp,
           ports: args.ports,
           timeoutMs: args.timeoutMs,
           concurrency: args.concurrency,

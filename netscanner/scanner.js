@@ -197,6 +197,44 @@ export function parseTargets(input) {
   return { input: raw, label, hosts, count: hosts.length }
 }
 
+/**
+ * Parse an inclusive start/end IPv4 pair into an explicit address list.
+ * This is the form the panel's two input fields produce; a single address
+ * passes the same end for both bounds.
+ */
+export function parseRange(startInput, endInput) {
+  const startText = String(startInput ?? '').trim()
+  const endText = String(endInput ?? '').trim()
+  const start = ipv4ToInt(startText)
+  if (start === null) {
+    throw new ScanError(`invalid start IP ${JSON.stringify(startText)}`, 'invalid-target', {
+      field: 'startIp',
+    })
+  }
+  const end = ipv4ToInt(endText)
+  if (end === null) {
+    throw new ScanError(`invalid end IP ${JSON.stringify(endText)}`, 'invalid-target', {
+      field: 'endIp',
+    })
+  }
+  if (start > end) {
+    throw new ScanError(`start IP ${startText} is after end IP ${endText}`, 'invalid-target', {
+      field: 'endIp',
+    })
+  }
+  const count = end - start + 1
+  if (count > MAX_HOSTS) {
+    throw new ScanError(
+      `${startText}-${endText} contains ${count} addresses; the limit is ${MAX_HOSTS}`,
+      'too-many-hosts',
+      { field: 'endIp', count, max: MAX_HOSTS },
+    )
+  }
+  const hosts = []
+  for (let value = start; value <= end; value += 1) hosts.push(intToIpv4(value))
+  return { input: `${startText} - ${endText}`, label: `${startText}-${endText}`, hosts, count }
+}
+
 /** Parse comma/space separated ports and inclusive ranges such as 80,443,8000-8010. */
 export function parsePorts(value) {
   if (value === undefined || value === null) return [...DEFAULT_PORTS]
@@ -347,7 +385,10 @@ export class NetworkScanner {
     if (this.running) {
       throw new ScanError('a scan is already running', 'scan-running', { scanId: this.current.id })
     }
-    const target = parseTargets(options.cidr ?? options.target)
+    const target =
+      options.startIp !== undefined || options.endIp !== undefined
+        ? parseRange(options.startIp ?? options.endIp, options.endIp ?? options.startIp)
+        : parseTargets(options.cidr ?? options.target)
     if (target.count > this.maxHosts) {
       throw new ScanError(
         `${target.label} contains ${target.count} addresses; the limit is ${this.maxHosts}`,
