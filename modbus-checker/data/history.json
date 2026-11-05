@@ -2,6 +2,2530 @@
   "version": 1,
   "batches": [
     {
+      "id": "batch-20261105-103640-m9yk",
+      "site": "福美富居",
+      "note": null,
+      "started_at": "2026-11-05T02:36:37.651Z",
+      "finished_at": "2026-11-05T02:36:40.315Z",
+      "duration_ms": 2664,
+      "cancelled": false,
+      "summary": {
+        "checked": 24,
+        "pass": 22,
+        "fail": 2,
+        "timeout": 0,
+        "passRate": 91.7,
+        "totalMs": 9290,
+        "slowest": [
+          {
+            "device": "M24-B2F-PSFB2-1",
+            "elapsed_ms": 2303
+          },
+          {
+            "device": "M28-2F-PF消墜進排風盤",
+            "elapsed_ms": 2284
+          },
+          {
+            "device": "M04-B4F-PS",
+            "elapsed_ms": 677
+          },
+          {
+            "device": "M03-B4F-PP1",
+            "elapsed_ms": 654
+          },
+          {
+            "device": "M13-2F",
+            "elapsed_ms": 590
+          }
+        ],
+        "avgModbusMs": 126,
+        "byErrorType": [
+          {
+            "type": "TCP_FAILED",
+            "count": 2
+          }
+        ],
+        "issues": [
+          {
+            "device": "M24-B2F-PSFB2-1",
+            "ip": "192.168.5.33",
+            "status": "FAIL",
+            "error_type": "TCP_FAILED",
+            "failed_stage": "tcp",
+            "diagnosis": "ICMP 完全沒有回應；TCP 也無法連線，設備可能斷電、網路中斷或 IP 設定錯誤"
+          },
+          {
+            "device": "M28-2F-PF消墜進排風盤",
+            "ip": "192.168.5.37",
+            "status": "FAIL",
+            "error_type": "TCP_FAILED",
+            "failed_stage": "tcp",
+            "diagnosis": "ICMP 完全沒有回應；TCP 也無法連線，設備可能斷電、網路中斷或 IP 設定錯誤"
+          }
+        ]
+      },
+      "results": [
+        {
+          "device_name": "M01-R1F弱電箱",
+          "ip": "192.168.5.10",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            true,
+            true,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 7,
+            "minMs": 7,
+            "maxMs": 7
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 6,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 13
+          },
+          "elapsed_ms": 138,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.651Z"
+        },
+        {
+          "device_name": "M02-B4F-EPF",
+          "ip": "192.168.5.11",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 7,
+            "minMs": 7,
+            "maxMs": 7
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 18,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 9
+          },
+          "elapsed_ms": 153,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.660Z"
+        },
+        {
+          "device_name": "M03-B4F-PP1",
+          "ip": "192.168.5.12",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 5,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 515
+          },
+          "elapsed_ms": 654,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.671Z"
+        },
+        {
+          "device_name": "M04-B4F-PS",
+          "ip": "192.168.5.13",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 5,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 4,
+            "minMs": 4,
+            "maxMs": 4
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 4,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 524
+          },
+          "elapsed_ms": 677,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.681Z"
+        },
+        {
+          "device_name": "M05-B4F-PW",
+          "ip": "192.168.5.14",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 4,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 7
+          },
+          "elapsed_ms": 148,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.694Z"
+        },
+        {
+          "device_name": "M06-B4F-PP2",
+          "ip": "192.168.5.15",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 8,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 8
+          },
+          "elapsed_ms": 151,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.707Z"
+        },
+        {
+          "device_name": "M07-B4F",
+          "ip": "192.168.5.16",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 3,
+            "minMs": 3,
+            "maxMs": 3
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 4,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 14
+          },
+          "elapsed_ms": 146,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.723Z"
+        },
+        {
+          "device_name": "M08-B3F弱電箱",
+          "ip": "192.168.5.17",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 3,
+            "minMs": 3,
+            "maxMs": 3
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 7,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 11
+          },
+          "elapsed_ms": 135,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.740Z"
+        },
+        {
+          "device_name": "M09-B2F",
+          "ip": "192.168.5.18",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 8
+          },
+          "elapsed_ms": 103,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.789Z"
+        },
+        {
+          "device_name": "M10-B2F-GPGPA",
+          "ip": "192.168.5.19",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 7,
+            "minMs": 7,
+            "maxMs": 7
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 4,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 10
+          },
+          "elapsed_ms": 88,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.813Z"
+        },
+        {
+          "device_name": "M11-B1F",
+          "ip": "192.168.5.20",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 10
+          },
+          "elapsed_ms": 68,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.842Z"
+        },
+        {
+          "device_name": "M12-1F",
+          "ip": "192.168.5.21",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 32,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 7,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 6
+          },
+          "elapsed_ms": 64,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.858Z"
+        },
+        {
+          "device_name": "M13-2F",
+          "ip": "192.168.5.22",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 5,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 527
+          },
+          "elapsed_ms": 590,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.869Z"
+        },
+        {
+          "device_name": "M14-3F",
+          "ip": "192.168.5.23",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 5,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 527
+          },
+          "elapsed_ms": 584,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.875Z"
+        },
+        {
+          "device_name": "M15-4F",
+          "ip": "192.168.5.24",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 2,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 7
+          },
+          "elapsed_ms": 63,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.892Z"
+        },
+        {
+          "device_name": "M16-6F",
+          "ip": "192.168.5.25",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 7,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 10
+          },
+          "elapsed_ms": 69,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.901Z"
+        },
+        {
+          "device_name": "M17-9F",
+          "ip": "192.168.5.26",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 12
+          },
+          "elapsed_ms": 65,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.910Z"
+        },
+        {
+          "device_name": "M18-10F",
+          "ip": "192.168.5.27",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 4,
+            "minMs": 4,
+            "maxMs": 4
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 5,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 526
+          },
+          "elapsed_ms": 587,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.922Z"
+        },
+        {
+          "device_name": "M19-12F",
+          "ip": "192.168.5.28",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 11
+          },
+          "elapsed_ms": 56,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.955Z"
+        },
+        {
+          "device_name": "M20-B4F-PSFB4",
+          "ip": "192.168.5.29",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 7
+          },
+          "elapsed_ms": 55,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.970Z"
+        },
+        {
+          "device_name": "M22-B3F-PSFB3",
+          "ip": "192.168.5.31",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 10
+          },
+          "elapsed_ms": 55,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:37.975Z"
+        },
+        {
+          "device_name": "M24-B2F-PSFB2-1",
+          "ip": "192.168.5.33",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "FAIL",
+          "error_type": "TCP_FAILED",
+          "error_message": "timed out after 2000ms",
+          "failed_stage": "tcp",
+          "values": [],
+          "ping": {
+            "ok": false,
+            "received": 0,
+            "attempts": 1,
+            "lossPercent": 100,
+            "avgMs": null,
+            "minMs": null,
+            "maxMs": null
+          },
+          "tcp": {
+            "ok": false,
+            "port": 502,
+            "elapsedMs": 2002,
+            "error": "timed out after 2000ms"
+          },
+          "modbus": null,
+          "elapsed_ms": 2303,
+          "diagnosis": "ICMP 完全沒有回應；TCP 也無法連線，設備可能斷電、網路中斷或 IP 設定錯誤",
+          "checked_at": "2026-11-05T02:36:38.011Z"
+        },
+        {
+          "device_name": "M26-B1F-PSFB1",
+          "ip": "192.168.5.35",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 2,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 8
+          },
+          "elapsed_ms": 54,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:38.025Z"
+        },
+        {
+          "device_name": "M28-2F-PF消墜進排風盤",
+          "ip": "192.168.5.37",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "FAIL",
+          "error_type": "TCP_FAILED",
+          "error_message": "timed out after 2000ms",
+          "failed_stage": "tcp",
+          "values": [],
+          "ping": {
+            "ok": false,
+            "received": 0,
+            "attempts": 1,
+            "lossPercent": 100,
+            "avgMs": null,
+            "minMs": null,
+            "maxMs": null
+          },
+          "tcp": {
+            "ok": false,
+            "port": 502,
+            "elapsedMs": 2003,
+            "error": "timed out after 2000ms"
+          },
+          "modbus": null,
+          "elapsed_ms": 2284,
+          "diagnosis": "ICMP 完全沒有回應；TCP 也無法連線，設備可能斷電、網路中斷或 IP 設定錯誤",
+          "checked_at": "2026-11-05T02:36:38.030Z"
+        }
+      ]
+    },
+    {
+      "id": "batch-20261105-103613-aqmc",
+      "site": "福美富居",
+      "note": "首次建檔檢查",
+      "started_at": "2026-11-05T02:36:10.947Z",
+      "finished_at": "2026-11-05T02:36:13.826Z",
+      "duration_ms": 2879,
+      "cancelled": false,
+      "summary": {
+        "checked": 24,
+        "pass": 22,
+        "fail": 2,
+        "timeout": 0,
+        "passRate": 91.7,
+        "totalMs": 9793,
+        "slowest": [
+          {
+            "device": "M24-B2F-PSFB2-1",
+            "elapsed_ms": 2451
+          },
+          {
+            "device": "M28-2F-PF消墜進排風盤",
+            "elapsed_ms": 2392
+          },
+          {
+            "device": "M03-B4F-PP1",
+            "elapsed_ms": 666
+          },
+          {
+            "device": "M04-B4F-PS",
+            "elapsed_ms": 648
+          },
+          {
+            "device": "M13-2F",
+            "elapsed_ms": 609
+          }
+        ],
+        "avgModbusMs": 128,
+        "byErrorType": [
+          {
+            "type": "TCP_FAILED",
+            "count": 2
+          }
+        ],
+        "issues": [
+          {
+            "device": "M24-B2F-PSFB2-1",
+            "ip": "192.168.5.33",
+            "status": "FAIL",
+            "error_type": "TCP_FAILED",
+            "failed_stage": "tcp",
+            "diagnosis": "ICMP 完全沒有回應；TCP 也無法連線，設備可能斷電、網路中斷或 IP 設定錯誤"
+          },
+          {
+            "device": "M28-2F-PF消墜進排風盤",
+            "ip": "192.168.5.37",
+            "status": "FAIL",
+            "error_type": "TCP_FAILED",
+            "failed_stage": "tcp",
+            "diagnosis": "ICMP 完全沒有回應；TCP 也無法連線，設備可能斷電、網路中斷或 IP 設定錯誤"
+          }
+        ]
+      },
+      "results": [
+        {
+          "device_name": "M01-R1F弱電箱",
+          "ip": "192.168.5.10",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            true,
+            true,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 5,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 18
+          },
+          "elapsed_ms": 195,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:10.947Z"
+        },
+        {
+          "device_name": "M02-B4F-EPF",
+          "ip": "192.168.5.11",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 6,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 7
+          },
+          "elapsed_ms": 167,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:10.965Z"
+        },
+        {
+          "device_name": "M03-B4F-PP1",
+          "ip": "192.168.5.12",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 5,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 525
+          },
+          "elapsed_ms": 666,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:10.980Z"
+        },
+        {
+          "device_name": "M04-B4F-PS",
+          "ip": "192.168.5.13",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 5,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 3,
+            "minMs": 3,
+            "maxMs": 3
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 5,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 521
+          },
+          "elapsed_ms": 648,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:10.998Z"
+        },
+        {
+          "device_name": "M05-B4F-PW",
+          "ip": "192.168.5.14",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 14,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 16
+          },
+          "elapsed_ms": 141,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.017Z"
+        },
+        {
+          "device_name": "M06-B4F-PP2",
+          "ip": "192.168.5.15",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 18
+          },
+          "elapsed_ms": 135,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.040Z"
+        },
+        {
+          "device_name": "M07-B4F",
+          "ip": "192.168.5.16",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 15,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 18
+          },
+          "elapsed_ms": 125,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.064Z"
+        },
+        {
+          "device_name": "M08-B3F弱電箱",
+          "ip": "192.168.5.17",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 16,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 18
+          },
+          "elapsed_ms": 119,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.087Z"
+        },
+        {
+          "device_name": "M09-B2F",
+          "ip": "192.168.5.18",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 4,
+            "minMs": 4,
+            "maxMs": 4
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 15,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 6
+          },
+          "elapsed_ms": 92,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.132Z"
+        },
+        {
+          "device_name": "M10-B2F-GPGPA",
+          "ip": "192.168.5.19",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 4,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 18
+          },
+          "elapsed_ms": 99,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.142Z"
+        },
+        {
+          "device_name": "M11-B1F",
+          "ip": "192.168.5.20",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 17
+          },
+          "elapsed_ms": 99,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.158Z"
+        },
+        {
+          "device_name": "M12-1F",
+          "ip": "192.168.5.21",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 32,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 17,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 9
+          },
+          "elapsed_ms": 105,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.175Z"
+        },
+        {
+          "device_name": "M13-2F",
+          "ip": "192.168.5.22",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 5,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 3,
+            "minMs": 3,
+            "maxMs": 3
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 2,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 524
+          },
+          "elapsed_ms": 609,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.189Z"
+        },
+        {
+          "device_name": "M14-3F",
+          "ip": "192.168.5.23",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 5,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 6,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 520
+          },
+          "elapsed_ms": 593,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.206Z"
+        },
+        {
+          "device_name": "M15-4F",
+          "ip": "192.168.5.24",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 2,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 8
+          },
+          "elapsed_ms": 78,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.224Z"
+        },
+        {
+          "device_name": "M16-6F",
+          "ip": "192.168.5.25",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 4,
+            "minMs": 4,
+            "maxMs": 4
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 4
+          },
+          "elapsed_ms": 79,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.241Z"
+        },
+        {
+          "device_name": "M17-9F",
+          "ip": "192.168.5.26",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 4,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 10
+          },
+          "elapsed_ms": 89,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.257Z"
+        },
+        {
+          "device_name": "M18-10F",
+          "ip": "192.168.5.27",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 3,
+            "minMs": 3,
+            "maxMs": 3
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 12,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 521
+          },
+          "elapsed_ms": 597,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.280Z"
+        },
+        {
+          "device_name": "M19-12F",
+          "ip": "192.168.5.28",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 2,
+            "minMs": 2,
+            "maxMs": 2
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 7
+          },
+          "elapsed_ms": 71,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.302Z"
+        },
+        {
+          "device_name": "M20-B4F-PSFB4",
+          "ip": "192.168.5.29",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 9,
+            "minMs": 9,
+            "maxMs": 9
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 6,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 13
+          },
+          "elapsed_ms": 88,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.320Z"
+        },
+        {
+          "device_name": "M22-B3F-PSFB3",
+          "ip": "192.168.5.31",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 3,
+            "minMs": 3,
+            "maxMs": 3
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 4,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 9
+          },
+          "elapsed_ms": 86,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.346Z"
+        },
+        {
+          "device_name": "M24-B2F-PSFB2-1",
+          "ip": "192.168.5.33",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 16,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "FAIL",
+          "error_type": "TCP_FAILED",
+          "error_message": "timed out after 2000ms",
+          "failed_stage": "tcp",
+          "values": [],
+          "ping": {
+            "ok": false,
+            "received": 0,
+            "attempts": 1,
+            "lossPercent": 100,
+            "avgMs": null,
+            "minMs": null,
+            "maxMs": null
+          },
+          "tcp": {
+            "ok": false,
+            "port": 502,
+            "elapsedMs": 2010,
+            "error": "timed out after 2000ms"
+          },
+          "modbus": null,
+          "elapsed_ms": 2451,
+          "diagnosis": "ICMP 完全沒有回應；TCP 也無法連線，設備可能斷電、網路中斷或 IP 設定錯誤",
+          "checked_at": "2026-11-05T02:36:11.373Z"
+        },
+        {
+          "device_name": "M26-B1F-PSFB1",
+          "ip": "192.168.5.35",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "PASS",
+          "error_type": null,
+          "error_message": null,
+          "failed_stage": null,
+          "values": [
+            false,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false
+          ],
+          "ping": {
+            "ok": true,
+            "received": 1,
+            "attempts": 1,
+            "lossPercent": 0,
+            "avgMs": 1,
+            "minMs": 1,
+            "maxMs": 1
+          },
+          "tcp": {
+            "ok": true,
+            "port": 502,
+            "elapsedMs": 3,
+            "error": null
+          },
+          "modbus": {
+            "ok": true,
+            "elapsedMs": 5
+          },
+          "elapsed_ms": 69,
+          "diagnosis": "檢查通過",
+          "checked_at": "2026-11-05T02:36:11.408Z"
+        },
+        {
+          "device_name": "M28-2F-PF消墜進排風盤",
+          "ip": "192.168.5.37",
+          "port": 502,
+          "unit_id": 1,
+          "function": "02",
+          "address": 0,
+          "plc_address": 10001,
+          "quantity": 8,
+          "check_profile": "full_stack",
+          "expected": null,
+          "status": "FAIL",
+          "error_type": "TCP_FAILED",
+          "error_message": "timed out after 2000ms",
+          "failed_stage": "tcp",
+          "values": [],
+          "ping": {
+            "ok": false,
+            "received": 0,
+            "attempts": 1,
+            "lossPercent": 100,
+            "avgMs": null,
+            "minMs": null,
+            "maxMs": null
+          },
+          "tcp": {
+            "ok": false,
+            "port": 502,
+            "elapsedMs": 2008,
+            "error": "timed out after 2000ms"
+          },
+          "modbus": null,
+          "elapsed_ms": 2392,
+          "diagnosis": "ICMP 完全沒有回應；TCP 也無法連線，設備可能斷電、網路中斷或 IP 設定錯誤",
+          "checked_at": "2026-11-05T02:36:11.432Z"
+        }
+      ]
+    },
+    {
       "id": "batch-20261105-102029-znsc",
       "site": "示範案場",
       "note": null,
