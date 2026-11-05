@@ -1,0 +1,11 @@
+{
+  "meta": {
+    "title": "智慧建築繪圖工作室",
+    "description": "使用 OpenRouter 繪圖模型生成智慧建築中控系統的背景圖與設備狀態圖標(含 GIF 動畫)。",
+    "plugin": {
+      "panel": {
+        "label": "繪圖工作室"
+      }
+    }
+  }
+}

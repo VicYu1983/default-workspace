@@ -1,0 +1,4 @@
+- insert:
+    - id: smart-building-studio
+      name: '@local/smart-building-studio'
+      config: {}
