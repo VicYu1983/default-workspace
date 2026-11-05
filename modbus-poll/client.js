@@ -42,6 +42,7 @@ window.__ModuleLoader__.load({
         'poll.connected': 'Connected',
         'poll.disconnected': 'Disconnected',
         'poll.preset': 'Saved devices',
+        'poll.presetName': 'Device name',
         'poll.presetNone': 'Current connection',
         'poll.presetSave': 'Save',
         'poll.presetDelete': 'Delete',
@@ -97,6 +98,7 @@ window.__ModuleLoader__.load({
         'poll.connected': '已連線',
         'poll.disconnected': '未連線',
         'poll.preset': '已存裝置',
+        'poll.presetName': '裝置名稱',
         'poll.presetNone': '目前連線',
         'poll.presetSave': '儲存',
         'poll.presetDelete': '刪除',
@@ -166,6 +168,7 @@ window.__ModuleLoader__.load({
  .mbp-input-host { width:150px; }
  .mbp-input-num { width:76px; }
  .mbp-input-write { width:88px; }
+ .mbp-input-name { width:140px; }
  .mbp-select { width:190px; }
  .mbp-select-preset { width:196px; }
  .mbp-select-type { width:92px; }
@@ -374,6 +377,7 @@ window.__ModuleLoader__.load({
         const [view, setView] = React.useState(() => ({ ...DEFAULT_VIEW, ...(stored.view || {}) }))
         const [profiles, setProfiles] = React.useState(() => (Array.isArray(stored.profiles) ? stored.profiles : []))
         const [activeProfile, setActiveProfile] = React.useState(stored.activeProfile || '')
+        const [presetName, setPresetName] = React.useState('')
         const [connected, setConnected] = React.useState(false)
         const [polling, setPolling] = React.useState(false)
         const [busy, setBusy] = React.useState(false)
@@ -649,7 +653,7 @@ window.__ModuleLoader__.load({
         }
 
         const savePreset = () => {
-          const name = `${conn.host.trim()}:${conn.port.trim()} / ${conn.unitId.trim()}`
+          const name = presetName.trim() || `${conn.host.trim()}:${conn.port.trim()} / ${conn.unitId.trim()}`
           setProfiles((current) => [...current.filter((entry) => entry.name !== name), {
             name,
             host: conn.host,
@@ -657,6 +661,7 @@ window.__ModuleLoader__.load({
             unitId: conn.unitId,
           }])
           setActiveProfile(name)
+          setPresetName('')
           flash(t('poll.presetSaved'))
         }
 
@@ -696,6 +701,16 @@ window.__ModuleLoader__.load({
               h('option', { value: '' }, t('poll.presetNone')),
               profiles.map((entry) => h('option', { key: entry.name, value: entry.name }, entry.name)),
             ),
+          ),
+          field(
+            t('poll.presetName'),
+            h('input', {
+              className: 'mbp-input mbp-input-name',
+              value: presetName,
+              placeholder: `${conn.host.trim()}:${conn.port.trim()} / ${conn.unitId.trim()}`,
+              spellCheck: false,
+              onChange: (event) => setPresetName(event.target.value),
+            }),
           ),
           field(
             ' ',

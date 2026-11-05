@@ -299,12 +299,17 @@ const typedRead = requests.filter((body) => body.op === 'read' && body.kind === 
 assert.equal(typedRead.type, 'f32', 'type forwarded to the host')
 
 // Saving a preset writes a named device entry.
+const nameInput = findAll(tree, (node) => node.type === 'input' && String(node.props.className || '').includes('mbp-input-name'))[0]
+assert.ok(nameInput, 'preset name input rendered')
+nameInput.props.onChange({ target: { value: 'My Custom Device' } })
+tree = await settle()
 const saveButton = byText(tree, 'poll.presetSave')[0]
 saveButton.props.onClick()
 tree = await settle()
 const saved = JSON.parse(storage.get('dsh.modbus-poll/v1'))
 assert.equal(saved.profiles.length, 1, 'one saved device')
-assert.match(saved.profiles[0].name, /127\.0\.0\.1:502/)
+assert.equal(saved.profiles[0].name, 'My Custom Device', 'custom name saved')
+assert.match(saved.profiles[0].name, /My Custom Device/)
 
 // Disconnect clears the table.
 await byText(tree, 'poll.disconnect')[0].props.onClick()

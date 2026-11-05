@@ -86,7 +86,7 @@ for (const [key, value] of Object.entries(zh)) {
 }
 
 // The new controls must have text in both languages, not fall back to a key.
-for (const key of ['poll.type', 'poll.wordOrder', 'poll.scale', 'poll.offset', 'poll.bits', 'poll.toggle', 'poll.preset']) {
+for (const key of ['poll.type', 'poll.wordOrder', 'poll.scale', 'poll.offset', 'poll.bits', 'poll.toggle', 'poll.preset', 'poll.presetName']) {
   assert.ok(key in en, `en has ${key}`)
   assert.ok(key in zh, `zh has ${key}`)
 }
