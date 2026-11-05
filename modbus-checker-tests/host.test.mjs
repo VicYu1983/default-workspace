@@ -1,7 +1,8 @@
 /**
  * Host-half test: mounts the plugin the way the Loader would and drives the
- * three agent tools end to end — list, check, save a baseline, break a device,
- * check again and compare against the baseline.
+ * four agent tools end to end — list, check, save a baseline, break a device,
+ * check again and compare against the baseline; then edit a site through
+ * site_edit and the same ops over the panel's HTTP route.
  *
  * Run with: node modbus-checker-tests/host.test.mjs
  */
@@ -81,9 +82,9 @@ const ctx = {
 }
 
 apply(ctx)
-assert.equal(tools.length, 3, 'three agent tools registered')
+assert.equal(tools.length, 4, 'four agent tools registered')
 const byName = new Map(tools.map((tool) => [tool.name, tool]))
-assert.deepEqual([...byName.keys()].sort(), ['site_baseline', 'site_check', 'site_devices'])
+assert.deepEqual([...byName.keys()].sort(), ['site_baseline', 'site_check', 'site_devices', 'site_edit'])
 
 // The DSH runner requires output { schema, render }: a missing render fails
 // the whole plugin at activation, so pin the contract here.
@@ -394,6 +395,69 @@ try {
   const rejected = await callRoute('sites', { sitesDir }, { connection: { requestRejection: () => 403 } })
   assert.equal(rejected.status, 403)
   assert.equal(rejected.body.error.code, 'unauthorized')
+
+  // --- site_edit: the editor ops through the tool and through the route -----
+  const edited = await run('site_edit', { action: 'read', site: '測試場', sitesDir })
+  assert.equal(edited.devices.length, 3)
+  assert.equal(edited.devices[0].name, 'plc-1')
+  assert.equal(edited.devices[0].plc_address, 40001, 'read returns normalized rows for the editor')
+
+  const created = await run('site_edit', {
+    action: 'save',
+    site: '編輯場',
+    sitesDir,
+    devices: [{ name: 'ed-1', ip: '127.0.0.1', port: fakePort, function: '03', expected: '100,107' }],
+  })
+  assert.equal(created.devices, 1)
+  const createdSummary = await run('site_devices', { action: 'summary', site: '編輯場', sitesDir })
+  assert.equal(createdSummary.stats.devices, 1)
+  const createdFile = JSON.parse(await readFile(path.join(sitesDir, '編輯場.json'), 'utf8'))
+  assert.ok(!('plc_address' in createdFile.devices[0]), 'the derived plc_address is not written back')
+
+  await assert.rejects(
+    () => byName.get('site_edit').execute({ action: 'save', site: '編輯場', sitesDir, devices: [{ name: 'x', ip: '127.0.0.1' }] }, {}),
+    (error) => error.message.includes('site-exists'),
+  )
+
+  const overwritten = await run('site_edit', {
+    action: 'save',
+    site: '編輯場',
+    sitesDir,
+    overwrite: true,
+    devices: [
+      { name: 'ed-1', ip: '127.0.0.1', port: fakePort, expected: '100,107' },
+      { name: 'ed-off', ip: '127.0.0.1', port: fakePort, enabled: false },
+    ],
+  })
+  assert.equal(overwritten.devices, 2)
+  const enabledNow = await run('site_devices', { action: 'summary', site: '編輯場', sitesDir })
+  assert.equal(enabledNow.stats.enabled, 1, 'a disabled row is kept and skipped by checks')
+
+  const deleted = await run('site_edit', { action: 'delete', site: '編輯場', sitesDir })
+  assert.equal(deleted.file, '編輯場.json')
+  const afterDelete = await run('site_devices', { action: 'sites', sitesDir })
+  assert.ok(!afterDelete.sites.some((entry) => entry.site === '編輯場'))
+  await assert.rejects(
+    () => byName.get('site_edit').execute({ action: 'delete', site: '編輯場', sitesDir }, {}),
+    (error) => error.message.includes('site-not-found'),
+  )
+
+  const editorHttp = await callRoute('siteSave', {
+    site: '面板場',
+    sitesDir,
+    devices: [{ name: 'p-1', ip: '127.0.0.1', port: fakePort }],
+  })
+  assert.equal(editorHttp.status, 200)
+  assert.ok(editorHttp.body.ok)
+  const conflictHttp = await callRoute('siteSave', { site: '面板場', sitesDir, devices: [{ name: 'p-2', ip: '127.0.0.1' }] })
+  assert.equal(conflictHttp.status, 409)
+  assert.equal(conflictHttp.body.error.code, 'site-exists')
+  const readHttp = await callRoute('siteRead', { site: '面板場', sitesDir })
+  assert.equal(readHttp.status, 200)
+  assert.equal(readHttp.body.devices.length, 1)
+  const deleteHttp = await callRoute('siteDelete', { site: '面板場', sitesDir })
+  assert.equal(deleteHttp.status, 200)
+  assert.match(deleteHttp.body.summary, /已刪除/)
 
 } finally {
   for (const dispose of effects) dispose()

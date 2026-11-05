@@ -55,6 +55,31 @@ window.__ModuleLoader__.load({
         'panel.starting': 'Starting…',
         'panel.noSite': 'No readable site files in the sites directory.',
         'panel.deviceCount': 'devices',
+        'panel.edit': 'Edit',
+        'panel.newSite': 'New site',
+        'panel.editorTitleEdit': 'Edit devices',
+        'panel.editorTitleNew': 'New site',
+        'panel.editorNamePlaceholder': 'site name (used as the JSON file name)',
+        'panel.editorHint': 'Saved as <site>.json in the sites directory; the site list refreshes on save.',
+        'panel.editorNoDevices': 'No device rows yet — add one below.',
+        'panel.save': 'Save',
+        'panel.cancel': 'Cancel',
+        'panel.deleteSite': 'Delete site',
+        'panel.deleteConfirm': 'Confirm delete',
+        'panel.addDevice': 'Add device',
+        'panel.colEnabled': 'On',
+        'panel.colName': 'Name',
+        'panel.colIp': 'IP',
+        'panel.colPort': 'Port',
+        'panel.colUnit': 'Unit',
+        'panel.colFunction': 'FC',
+        'panel.colAddress': 'Addr',
+        'panel.colQuantity': 'Qty',
+        'panel.colExpected': 'Expected',
+        'panel.colProfile': 'Profile',
+        'panel.colTcp': 'TCP port',
+        'panel.editorSaved': 'Site saved.',
+        'panel.editorDeleted': 'Site deleted.',
       },
       zh: {
         'panel.title': 'Modbus 案場檢查',
@@ -92,6 +117,31 @@ window.__ModuleLoader__.load({
         'panel.starting': '啟動中…',
         'panel.noSite': 'sites 目錄內沒有可讀取的案場檔。',
         'panel.deviceCount': '台',
+        'panel.edit': '編輯',
+        'panel.newSite': '新增案場',
+        'panel.editorTitleEdit': '編輯設備清單',
+        'panel.editorTitleNew': '建立新案場',
+        'panel.editorNamePlaceholder': '案場名稱（即 JSON 檔名）',
+        'panel.editorHint': '儲存後寫入 sites 目錄的 <案場>.json，案場清單會自動更新。',
+        'panel.editorNoDevices': '還沒有設備列 —— 按下方新增。',
+        'panel.save': '儲存',
+        'panel.cancel': '取消',
+        'panel.deleteSite': '刪除案場',
+        'panel.deleteConfirm': '再按一次確認',
+        'panel.addDevice': '新增設備',
+        'panel.colEnabled': '啟用',
+        'panel.colName': '名稱',
+        'panel.colIp': 'IP',
+        'panel.colPort': '埠',
+        'panel.colUnit': '站號',
+        'panel.colFunction': '功能',
+        'panel.colAddress': '位址',
+        'panel.colQuantity': '數量',
+        'panel.colExpected': '預期值',
+        'panel.colProfile': '流程',
+        'panel.colTcp': 'TCP埠',
+        'panel.editorSaved': '案場已儲存。',
+        'panel.editorDeleted': '案場已刪除。',
       },
     }
 
@@ -144,6 +194,15 @@ window.__ModuleLoader__.load({
  .msc-star { color:var(--dsw-alias-state-warn-primary); }
  .msc-section { margin-top:10px; }
  .msc-section-title { font-size:12px; font-weight:600; margin:0 0 4px; }
+ .msc-scroll { overflow-x:auto; }
+ .msc-edit-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+ .msc-edit-table th { text-align:left; font-weight:500; color:var(--dsw-alias-label-secondary); padding:4px 6px; border-bottom:1px solid var(--dsw-alias-border-l1); white-space:nowrap; }
+ .msc-edit-table td { padding:3px 6px; border-bottom:1px solid var(--dsw-alias-border-l1); }
+ .msc-edit-table tbody tr:last-child td { border-bottom:none; }
+ .msc-cell { box-sizing:border-box; height:26px; border-radius:5px; border:1px solid var(--dsw-alias-border-l1); background:var(--dsw-alias-bg-base); color:var(--dsw-alias-label-primary); font:inherit; font-size:12px; padding:0 6px; outline:none; min-width:48px; }
+ .msc-cell:focus { border-color:var(--dsw-alias-brand-primary); }
+ .msc-edit-actions { display:flex; gap:8px; margin-top:10px; }
+ .msc-site-name { width:220px; }
  `
 
     function messageOf(error) {
@@ -256,6 +315,9 @@ window.__ModuleLoader__.load({
         const noticeTimer = React.useRef(0)
         const jobRef = React.useRef(null)
         const siteRef = React.useRef(site)
+        const [editing, setEditing] = React.useState(null)
+        const [sitesDir, setSitesDir] = React.useState('')
+        const [deleteArmed, setDeleteArmed] = React.useState(false)
 
         const flash = React.useCallback((text) => {
           setNotice(text)
@@ -287,6 +349,7 @@ window.__ModuleLoader__.load({
         const loadSites = React.useCallback(async () => {
           const data = await callHost({ op: 'sites' })
           setSites(data.sites || [])
+          setSitesDir(data.dir || '')
           return data.sites || []
         }, [])
 
@@ -479,6 +542,121 @@ window.__ModuleLoader__.load({
           }
         }
 
+        // ------------------------------------------------------------- editor
+
+        const EDIT_NUMERIC_FIELDS = ['port', 'unit_id', 'address', 'quantity', 'tcp_port']
+
+        const newEditorRow = () => ({
+          name: '',
+          ip: '',
+          port: 502,
+          unit_id: 1,
+          address: 0,
+          quantity: 1,
+          function: '03',
+          expected: '',
+          check_profile: 'full_stack',
+          enabled: true,
+        })
+
+        const openEditor = async () => {
+          setError('')
+          setDeleteArmed(false)
+          try {
+            const data = await callHost({ op: 'siteRead', site })
+            setEditing({
+              mode: 'edit',
+              site: data.site,
+              file: data.file,
+              // Keep every field the host normalized: the editor renders only
+              // the common ones, and a save must not silently reset the rest.
+              devices: (data.devices || []).map((row) => ({ ...row })),
+            })
+          } catch (failure) {
+            setError(messageOf(failure))
+          }
+        }
+
+        const openCreate = () => {
+          setError('')
+          setDeleteArmed(false)
+          setEditing({ mode: 'create', site: '', file: null, devices: [newEditorRow()] })
+        }
+
+        const closeEditor = () => {
+          setEditing(null)
+          setDeleteArmed(false)
+        }
+
+        const updateRow = (index, key, value) =>
+          setEditing((current) =>
+            current
+              ? {
+                  ...current,
+                  devices: current.devices.map((row, i) => (i === index ? { ...row, [key]: value } : row)),
+                }
+              : current,
+          )
+
+        const removeRow = (index) =>
+          setEditing((current) =>
+            current ? { ...current, devices: current.devices.filter((_, i) => i !== index) } : current,
+          )
+
+        // Blank numeric cells must be omitted rather than sent as '' or null:
+        // the host coercion reads those as 0 instead of falling back.
+        const cleanRowForSave = (row) => {
+          const out = { ...row }
+          for (const key of EDIT_NUMERIC_FIELDS) {
+            const raw = out[key]
+            if (raw === '' || raw === null || raw === undefined || !Number.isFinite(Number(raw))) delete out[key]
+            else out[key] = Number(raw)
+          }
+          if (typeof out.expected === 'string' && out.expected.trim() === '') delete out.expected
+          return out
+        }
+
+        const saveEditor = async () => {
+          const current = editing
+          if (!current) return
+          setError('')
+          try {
+            const data = await callHost({
+              op: 'siteSave',
+              site: current.site.trim(),
+              overwrite: current.mode === 'edit',
+              devices: current.devices.map(cleanRowForSave),
+            })
+            setEditing(null)
+            setDeleteArmed(false)
+            await loadSites()
+            setSite(data.site)
+            flash(t('panel.editorSaved'))
+          } catch (failure) {
+            setError(messageOf(failure))
+          }
+        }
+
+        const deleteEditedSite = async () => {
+          const current = editing
+          if (!current || current.mode !== 'edit') return
+          if (!deleteArmed) {
+            setDeleteArmed(true)
+            return
+          }
+          setError('')
+          try {
+            const data = await callHost({ op: 'siteDelete', site: current.site })
+            const list = await loadSites()
+            const names = list.filter((entry) => !entry.error).map((entry) => entry.site)
+            if (siteRef.current === data.site) setSite(names[0] ?? '')
+            closeEditor()
+            flash(t('panel.editorDeleted'))
+          } catch (failure) {
+            setError(messageOf(failure))
+          }
+        }
+
         const field = (label, control) =>
           h('div', { className: 'msc-field' }, h('span', { className: 'msc-label' }, label), control)
 
@@ -531,6 +709,8 @@ window.__ModuleLoader__.load({
             h(
               'div',
               { className: 'msc-actions' },
+              h('button', { type: 'button', className: 'msc-btn msc-btn-ghost', disabled: !site, onClick: openEditor }, t('panel.edit')),
+              h('button', { type: 'button', className: 'msc-btn msc-btn-ghost', onClick: openCreate }, t('panel.newSite')),
               h('button', { type: 'button', className: 'msc-btn msc-btn-ghost', onClick: refreshSite }, t('panel.refresh')),
             ),
           ),
@@ -802,6 +982,178 @@ window.__ModuleLoader__.load({
             )
           : null
 
+        const editorTitle = editing
+          ? editing.mode === 'create'
+            ? t('panel.editorTitleNew')
+            : `${t('panel.editorTitleEdit')} — ${editing.site}`
+          : ''
+
+        const editorHeadInput =
+          editing && editing.mode === 'create'
+            ? h('input', {
+                className: 'msc-input msc-site-name',
+                value: editing.site,
+                placeholder: t('panel.editorNamePlaceholder'),
+                onChange: (event) =>
+                  setEditing((current) => (current ? { ...current, site: event.target.value } : current)),
+              })
+            : h('span', { className: 'msc-strong' }, editing ? editing.site : '')
+
+        const editorCell = (row, index, key, extra) =>
+          h('input', {
+            className: 'msc-cell msc-mono',
+            style: { width: extra && extra.width ? extra.width : undefined, minWidth: extra && extra.minWidth ? extra.minWidth : undefined },
+            value: row[key] ?? '',
+            placeholder: extra && extra.placeholder ? extra.placeholder : '',
+            onChange: (event) => updateRow(index, key, event.target.value),
+          })
+
+        const editorCard = editing
+          ? h(
+              'section',
+              { className: 'msc-card' },
+              h(
+                'div',
+                { className: 'msc-row' },
+                h(
+                  'div',
+                  { className: 'msc-field' },
+                  h('span', { className: 'msc-label' }, editorTitle),
+                  editorHeadInput,
+                ),
+                h(
+                  'div',
+                  { className: 'msc-actions' },
+                  h('button', { type: 'button', className: 'msc-btn', onClick: saveEditor }, t('panel.save')),
+                  h('button', { type: 'button', className: 'msc-btn msc-btn-ghost', onClick: closeEditor }, t('panel.cancel')),
+                  editing.mode === 'edit'
+                    ? h(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'msc-btn ' + (deleteArmed ? 'msc-btn-stop' : 'msc-btn-ghost'),
+                          onClick: deleteEditedSite,
+                        },
+                        deleteArmed ? t('panel.deleteConfirm') : t('panel.deleteSite'),
+                      )
+                    : null,
+                ),
+              ),
+              h('p', { className: 'msc-dim', style: { fontSize: 11, margin: '0 2px' } }, t('panel.editorHint')),
+              h(
+                'div',
+                { className: 'msc-scroll' },
+                h(
+                  'table',
+                  { className: 'msc-edit-table' },
+                  h(
+                    'thead',
+                    null,
+                    h(
+                      'tr',
+                      null,
+                      h('th', null, t('panel.colEnabled')),
+                      h('th', null, t('panel.colName')),
+                      h('th', null, t('panel.colIp')),
+                      h('th', null, t('panel.colPort')),
+                      h('th', null, t('panel.colUnit')),
+                      h('th', null, t('panel.colFunction')),
+                      h('th', null, t('panel.colAddress')),
+                      h('th', null, t('panel.colQuantity')),
+                      h('th', null, t('panel.colExpected')),
+                      h('th', null, t('panel.colProfile')),
+                      h('th', null, t('panel.colTcp')),
+                      h('th', null, ''),
+                    ),
+                  ),
+                  h(
+                    'tbody',
+                    null,
+                    editing.devices.map((row, index) =>
+                      h(
+                        'tr',
+                        { key: index },
+                        h(
+                          'td',
+                          null,
+                          h('input', {
+                            type: 'checkbox',
+                            checked: row.enabled !== false,
+                            onChange: (event) => updateRow(index, 'enabled', event.target.checked),
+                          }),
+                        ),
+                        h('td', null, editorCell(row, index, 'name', { minWidth: 110 })),
+                        h('td', null, editorCell(row, index, 'ip', { minWidth: 120 })),
+                        h('td', null, editorCell(row, index, 'port', { width: 60 })),
+                        h('td', null, editorCell(row, index, 'unit_id', { width: 48 })),
+                        h(
+                          'td',
+                          null,
+                          h(
+                            'select',
+                            {
+                              className: 'msc-cell',
+                              style: { width: 64 },
+                              value: row.function ?? '03',
+                              onChange: (event) => updateRow(index, 'function', event.target.value),
+                            },
+                            ['01', '02', '03', '04'].map((code) => h('option', { key: code, value: code }, code)),
+                          ),
+                        ),
+                        h('td', null, editorCell(row, index, 'address', { width: 64 })),
+                        h('td', null, editorCell(row, index, 'quantity', { width: 52 })),
+                        h('td', null, editorCell(row, index, 'expected', { minWidth: 110, placeholder: '100,107 / 0..100' })),
+                        h(
+                          'td',
+                          null,
+                          h(
+                            'select',
+                            {
+                              className: 'msc-cell',
+                              style: { width: 110 },
+                              value: row.check_profile ?? 'full_stack',
+                              onChange: (event) => updateRow(index, 'check_profile', event.target.value),
+                            },
+                            ['ping', 'ping_tcp', 'full_stack'].map((profile) =>
+                              h('option', { key: profile, value: profile }, profile),
+                            ),
+                          ),
+                        ),
+                        h('td', null, editorCell(row, index, 'tcp_port', { width: 64 })),
+                        h(
+                          'td',
+                          null,
+                          h(
+                            'button',
+                            { type: 'button', className: 'msc-btn msc-btn-ghost msc-btn-sm', onClick: () => removeRow(index) },
+                            '✕',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              editing.devices.length === 0 ? h('p', { className: 'msc-empty' }, t('panel.editorNoDevices')) : null,
+              h(
+                'div',
+                { className: 'msc-edit-actions' },
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'msc-btn msc-btn-ghost msc-btn-sm',
+                    onClick: () =>
+                      setEditing((current) =>
+                        current ? { ...current, devices: [...current.devices, newEditorRow()] } : current,
+                      ),
+                  },
+                  t('panel.addDevice'),
+                ),
+              ),
+            )
+          : null
+
         return h(
           'div',
           { className: 'msc' },
@@ -812,6 +1164,7 @@ window.__ModuleLoader__.load({
             { className: 'msc-body' },
             error ? h('div', { className: 'msc-error' }, error) : notice ? h('div', { className: 'msc-okline' }, notice) : null,
             siteCard,
+            editorCard,
             checkCard,
             resultCard,
             baselineCard,

@@ -7,7 +7,7 @@
  * field is optional here except `name` and `ip`, because field sites evolve and
  * a missing timeout should mean "use the default", not "refuse to load".
  */
-import { readFile, readdir, writeFile } from 'node:fs/promises'
+import { readFile, readdir, unlink, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 export const CHECK_PROFILES = ['ping', 'ping_tcp', 'full_stack']
@@ -148,7 +148,7 @@ export function normalizeSite(raw, { fileName = null } = {}) {
   }
 }
 
-function assertSiteName(name) {
+export function assertSiteName(name) {
   const text = String(name ?? '').trim()
   if (text === '') {
     throw new SiteError('site is required', 'invalid-parameter', { field: 'site' })
@@ -208,6 +208,31 @@ export async function loadSite(dir, name) {
     throw new SiteError(`${file} is not valid JSON: ${error.message}`, 'invalid-site', { file })
   }
   return normalizeSite(raw, { fileName: path.basename(file) })
+}
+
+/** True when `<site>.json` already exists, so a save can refuse to clobber it. */
+export async function siteExists(dir, name) {
+  try {
+    await stat(siteFile(dir, name))
+    return true
+  } catch (error) {
+    if (error.code === 'ENOENT') return false
+    throw new SiteError(`cannot inspect ${path.join(dir, `${name}.json`)}: ${error.message}`, 'site-unreadable')
+  }
+}
+
+/** Remove one site file. A missing file is an error, not a silent success. */
+export async function deleteSite(dir, name) {
+  const file = siteFile(dir, name)
+  try {
+    await unlink(file)
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      throw new SiteError(`site ${JSON.stringify(name)} not found in ${dir}`, 'site-not-found', { dir })
+    }
+    throw new SiteError(`cannot delete ${file}: ${error.message}`, 'site-unreadable')
+  }
+  return file
 }
 
 /** Write a site back in the same shape, so the desktop tool keeps reading it. */

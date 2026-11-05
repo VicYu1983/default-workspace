@@ -17,14 +17,26 @@ import { fileURLToPath } from 'node:url'
 import { checkDevices, summarizeResults } from './checker.js'
 import { compareBatches, describeComparison } from './compare.js'
 import { HistoryStore, makeBatchId } from './history.js'
-import { SiteError, listSites, loadSite, selectDevices, summarizeSite } from './sites.js'
+import {
+  SiteError,
+  assertSiteName,
+  deleteSite,
+  listSites,
+  loadSite,
+  normalizeSite,
+  saveSite,
+  selectDevices,
+  siteExists,
+  summarizeSite,
+} from './sites.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const DEFAULT_SITES_DIR = process.env.DSH_MODBUS_CHECKER_SITES || path.join(HERE, 'sites')
 const DEFAULT_DATA_DIR = process.env.DSH_MODBUS_CHECKER_DATA || path.join(HERE, 'data')
 
 const ROUTE_PATH = '/modbus-checker/api'
-const MAX_BODY_BYTES = 64 * 1024
+/** A 500-device site JSON is well under this; the limit only stops runaway bodies. */
+const MAX_BODY_BYTES = 512 * 1024
 
 /** Above this many devices a run is handed back as a job instead of blocking. */
 const AUTO_BACKGROUND_DEVICES = 25
@@ -397,6 +409,61 @@ export function apply(ctx) {
     }
   }
 
+  // ------------------------------------------------------- site editor ops
+
+  /**
+   * Load one site as editable device rows. The editor keeps the whole
+   * normalized device so fields it does not render survive a save.
+   */
+  async function opSiteRead(args) {
+    const { dir, site } = await resolveSite(args)
+    return {
+      dir,
+      site: site.site_name,
+      file: site.source_file,
+      devices: site.devices,
+      summary: `已載入 ${site.site_name}（${site.devices.length} 台）供編輯`,
+    }
+  }
+
+  /**
+   * Validate and write one site file. Rows go through the same normalization
+   * as loading, so the panel and the agent cannot write a file the checker
+   * would refuse to read; the derived plc_address is recomputed, not stored.
+   */
+  async function opSiteSave(args) {
+    const dir = sitesDirOf(args)
+    const siteName = assertSiteName(String(args?.site ?? ''))
+    const rawDevices = Array.isArray(args?.devices) ? args.devices : []
+    const site = normalizeSite({ schema_version: 1, site_name: siteName, devices: rawDevices })
+
+    const overwrite = args?.overwrite === true
+    if (!overwrite && (await siteExists(dir, siteName))) {
+      throw fail(
+        'site-exists',
+        `site ${siteName} already exists in ${dir}; pass overwrite true to replace it`,
+        { dir, site: siteName },
+      )
+    }
+
+    const devices = site.devices.map(({ plc_address, ...config }) => config)
+    const file = await saveSite(dir, { schema_version: 1, site_name: siteName, devices })
+    return {
+      dir,
+      site: siteName,
+      file: path.basename(file),
+      devices: devices.length,
+      summary: `已儲存案場 ${siteName}（${devices.length} 台）到 ${file}`,
+    }
+  }
+
+  async function opSiteDelete(args) {
+    const dir = sitesDirOf(args)
+    const siteName = assertSiteName(String(args?.site ?? ''))
+    const file = await deleteSite(dir, siteName)
+    return { dir, site: siteName, file: path.basename(file), summary: `已刪除案場檔 ${path.basename(file)}` }
+  }
+
   const OPS = {
     sites: opSites,
     summary: opSummary,
@@ -409,6 +476,9 @@ export function apply(ctx) {
     show: opBaselineShow,
     clear: opBaselineClear,
     compare: opCompare,
+    siteRead: opSiteRead,
+    siteSave: opSiteSave,
+    siteDelete: opSiteDelete,
   }
 
   async function dispatch(op, args) {
@@ -416,7 +486,7 @@ export function apply(ctx) {
     if (!handler) {
       throw fail(
         'invalid-op',
-        `unknown operation ${JSON.stringify(op)}; use sites, summary, list, run, status, cancel, batches, save, show, clear or compare`,
+        `unknown operation ${JSON.stringify(op)}; use sites, summary, list, run, status, cancel, batches, save, show, clear, compare, siteRead, siteSave or siteDelete`,
         { field: 'op' },
       )
     }
@@ -435,7 +505,7 @@ export function apply(ctx) {
     },
   }
 
-  function makeTool(name, description, parameters, actions) {
+  function makeTool(name, description, parameters, actions, opMap) {
     return {
       name,
       description,
@@ -451,7 +521,7 @@ export function apply(ctx) {
             field: 'action',
           })
         }
-        return { action, ...(await dispatch(action, args)) }
+        return { action, ...(await dispatch(opMap?.[action] ?? action, args)) }
       },
     }
   }
@@ -539,6 +609,62 @@ export function apply(ctx) {
     ['batches', 'save', 'show', 'clear', 'compare'],
   )
 
+  const DEVICE_ROW_PARAM = {
+    type: 'object',
+    additionalProperties: true,
+    required: ['name', 'ip'],
+    description: 'One device row. Only name and ip are required; omitted fields fall back to their defaults.',
+    properties: {
+      name: { type: 'string', description: 'Unique device name within the site.' },
+      ip: { type: 'string', description: 'Device IPv4 address or host name.' },
+      port: { type: 'integer', description: 'Modbus TCP port (default 502).' },
+      unit_id: { type: 'integer', description: 'Modbus unit id (default 1).' },
+      address: { type: 'integer', description: 'Zero-based register offset (default 0).' },
+      quantity: { type: 'integer', description: 'Registers/bits to read (default 1).' },
+      function: { type: 'string', enum: ['01', '02', '03', '04'], description: 'Modbus function code (default 03).' },
+      expected: { type: 'string', description: 'Expected values: "100,107", a "0..100" range or booleans "1,0,1".' },
+      check_profile: {
+        type: 'string',
+        enum: ['ping', 'ping_tcp', 'full_stack'],
+        description: 'ping = ICMP only; ping_tcp = ICMP + TCP port; full_stack = ICMP + TCP + Modbus read.',
+      },
+      enabled: { type: 'boolean', description: 'Disabled devices are skipped by checks (default true).' },
+      tcp_port: { type: 'integer', description: 'TCP port for ping_tcp devices; defaults to port.' },
+    },
+  }
+
+  /**
+   * The write half of the site checklist. `site_devices` stays read-only; this
+   * tool carries the editor ops so a panel button and the agent share one
+   * implementation.
+   */
+  const editTool = makeTool(
+    'site_edit',
+    'Edit the site checklist: read one site JSON as editable device rows, save a site (create new, or overwrite with overwrite: true) and delete a site file. Actions: read, save, delete.',
+    {
+      type: 'object',
+      additionalProperties: false,
+      required: ['action', 'site'],
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['read', 'save', 'delete'],
+          description: 'read loads one site as device rows; save writes the site JSON; delete removes the site file.',
+        },
+        site: { type: 'string', description: 'Site name (the JSON file name without .json).' },
+        sitesDir: SITES_DIR_PARAM,
+        overwrite: { type: 'boolean', description: 'save only: replace the file even when the site already exists.' },
+        devices: {
+          type: 'array',
+          description: 'save only: the device rows to write.',
+          items: DEVICE_ROW_PARAM,
+        },
+      },
+    },
+    ['read', 'save', 'delete'],
+    { read: 'siteRead', save: 'siteSave', delete: 'siteDelete' },
+  )
+
   /** Surface the error code to the agent, the same way modbus_poll does. */
   function withCodes(impl) {
     return async (args) => {
@@ -554,7 +680,7 @@ export function apply(ctx) {
     }
   }
 
-  for (const toolDef of [devicesTool, checkTool, baselineTool]) {
+  for (const toolDef of [devicesTool, checkTool, baselineTool, editTool]) {
     const execute = toolDef.execute
     toolDef.execute = withCodes(execute)
     ctx.effect(() => ctx.tools.register(toolDef))
@@ -579,6 +705,7 @@ export function apply(ctx) {
     'no-baseline': 409,
     'site-mismatch': 409,
     'batch-is-baseline': 409,
+    'site-exists': 409,
   }
 
   function send(response, status, payload) {

@@ -1,8 +1,8 @@
 {
   "name": "@local/dsh-plugin-modbus-checker",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "Site-wide Modbus/Ping/TCP regression checker: agent tools plus a sidebar panel for site summary, one-click checks and baseline comparison.",
+  "description": "Site-wide Modbus/Ping/TCP regression checker: agent tools, a sidebar panel with a site editor for one-click checks and baseline comparison.",
   "type": "module",
   "exports": {
     ".": "./index.js",
