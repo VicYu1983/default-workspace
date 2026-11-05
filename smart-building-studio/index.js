@@ -21,10 +21,45 @@ const OPENROUTER_BASE = 'https://openrouter.ai/api/v1';
 /* helpers                                                             */
 /* ------------------------------------------------------------------ */
 
-function json(status, body) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+// `webServer` routes are plain node:http handlers — the request must be answered
+// through `response`, a returned value is ignored and the socket would hang.
+const MAX_BODY_BYTES = 1024 * 1024;
+
+function send(response, status, payload) {
+  response.statusCode = status;
+  response.setHeader('content-type', 'application/json; charset=utf-8');
+  response.setHeader('cache-control', 'no-store');
+  response.end(JSON.stringify(payload));
+}
+
+function sendImage(response, type, buffer) {
+  response.statusCode = 200;
+  response.setHeader('content-type', type);
+  response.setHeader('cache-control', 'no-store');
+  response.end(buffer);
+}
+
+function readJsonBody(request) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    request.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        reject(new Error('request body too large'));
+        request.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    request.on('end', () => {
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'));
+      } catch {
+        reject(new Error('請求內容必須是合法 JSON'));
+      }
+    });
+    request.on('error', (err) => reject(err));
   });
 }
 
@@ -72,17 +107,26 @@ function defaultDirectory(ctx) {
 const NO_KEY_MESSAGE =
   'OPENROUTER_API_KEY 未設定。請在工作區根目錄建立 .env 檔,加入一行:OPENROUTER_API_KEY=sk-or-v1-你的key (或設定同名環境變數後重新啟動)。';
 
-async function getApiKey(ctx) {
+async function getApiKeyInfo(ctx) {
   const fromProcess = process.env.OPENROUTER_API_KEY?.trim();
-  if (fromProcess) return fromProcess;
+  if (fromProcess) return { key: fromProcess, source: 'env' };
   try {
     const text = await fsp.readFile(path.join(defaultDirectory(ctx), '.env'), 'utf8');
     const key = parseEnvFile(text).OPENROUTER_API_KEY?.trim();
-    if (key) return key;
+    if (key) return { key, source: 'dotenv' };
   } catch {
     /* .env absent — fall through */
   }
-  return undefined;
+  return { key: undefined, source: null };
+}
+
+async function getApiKey(ctx) {
+  const { key } = await getApiKeyInfo(ctx);
+  return key;
+}
+
+function envFilePath(ctx) {
+  return path.join(defaultDirectory(ctx), '.env');
 }
 
 function assetsRoot(ctx) {
@@ -253,13 +297,13 @@ async function readAsset(ctx, rel) {
   const root = path.resolve(assetsRoot(ctx));
   const target = path.resolve(root, String(rel || ''));
   if (target !== root && !target.startsWith(root + path.sep)) {
-    return json(400, { ok: false, error: '無效的檔案路徑' });
+    return { status: 400, error: '無效的檔案路徑' };
   }
-  let buf;
+  let buffer;
   try {
-    buf = await fsp.readFile(target);
+    buffer = await fsp.readFile(target);
   } catch {
-    return json(404, { ok: false, error: '找不到該資產檔案' });
+    return { status: 404, error: '找不到該資產檔案' };
   }
   const types = {
     '.png': 'image/png',
@@ -270,10 +314,7 @@ async function readAsset(ctx, rel) {
     '.svg': 'image/svg+xml',
   };
   const type = types[path.extname(target).toLowerCase()] || 'application/octet-stream';
-  return new Response(buf, {
-    status: 200,
-    headers: { 'content-type': type, 'cache-control': 'no-store' },
-  });
+  return { status: 200, type, buffer };
 }
 
 /* ------------------------------------------------------------------ */
@@ -281,35 +322,70 @@ async function readAsset(ctx, rel) {
 /* ------------------------------------------------------------------ */
 
 function createRouteHandler(ctx) {
-  return async function handleRequest(request) {
+  return async function handleRequest(request, response) {
+    const connection = ctx.get('connection');
+    const rejection =
+      connection && typeof connection.requestRejection === 'function'
+        ? connection.requestRejection(request)
+        : undefined;
+    if (rejection) {
+      send(response, rejection, { ok: false, error: 'request rejected by the browser trust boundary' });
+      return;
+    }
+
     let url;
     try {
-      url = new URL(request.url, 'http://localhost');
+      url = new URL(request.url ?? '/', 'http://localhost');
     } catch {
-      return json(400, { ok: false, error: 'invalid url' });
+      send(response, 400, { ok: false, error: 'invalid url' });
+      return;
     }
     if (!url.pathname.startsWith('/studio/api')) {
-      return json(404, { ok: false, error: 'not found' });
+      send(response, 404, { ok: false, error: 'not found' });
+      return;
     }
+
     const op = url.searchParams.get('op');
     try {
-      if (op === 'generate') {
-        if (request.method !== 'POST') return json(405, { ok: false, error: 'POST required' });
-        const body = await request.json().catch(() => null);
-        return json(200, await generateFromParams(ctx, body));
+      if (op === 'status') {
+        const { key, source } = await getApiKeyInfo(ctx);
+        send(response, 200, {
+          ok: true,
+          hasKey: Boolean(key),
+          keySource: source,
+          envFile: envFilePath(ctx),
+        });
+        return;
       }
       if (op === 'models') {
-        return json(200, { ok: true, models: await listImageModels(ctx) });
+        send(response, 200, { ok: true, models: await listImageModels(ctx) });
+        return;
       }
       if (op === 'list') {
-        return json(200, { ok: true, assets: await listAssets(ctx) });
+        send(response, 200, { ok: true, entries: await listAssets(ctx) });
+        return;
       }
       if (op === 'asset') {
-        return readAsset(ctx, url.searchParams.get('file'));
+        const asset = await readAsset(ctx, url.searchParams.get('file'));
+        if (asset.error) {
+          send(response, asset.status, { ok: false, error: asset.error });
+          return;
+        }
+        sendImage(response, asset.type, asset.buffer);
+        return;
       }
-      return json(400, { ok: false, error: 'unknown op' });
+      if (op === 'generate') {
+        if (request.method !== 'POST') {
+          response.setHeader('allow', 'POST');
+          send(response, 405, { ok: false, error: 'POST required' });
+          return;
+        }
+        send(response, 200, await generateFromParams(ctx, await readJsonBody(request)));
+        return;
+      }
+      send(response, 400, { ok: false, error: 'unknown op' });
     } catch (err) {
-      return json(400, { ok: false, error: String(err?.message || err) });
+      send(response, 400, { ok: false, error: String(err?.message || err) });
     }
   };
 }
@@ -364,7 +440,7 @@ export function apply(ctx) {
   ctx.inject(['webServer'], (inner) => {
     const webServer = inner.webServer ?? inner.get?.('webServer');
     if (!webServer?.register) return;
-    const dispose = webServer.register({ path: '/studio/api', handler: createRouteHandler(ctx) });
+    const dispose = webServer.register({ kind: 'exact', path: '/studio/api', handler: createRouteHandler(ctx) });
     inner.effect(() => dispose);
   });
 

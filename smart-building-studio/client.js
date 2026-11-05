@@ -66,9 +66,10 @@ window.__ModuleLoader__.load({
         'state.pending': '等待中',
         'error.models': '無法載入模型清單',
         'hint.key': '尚未設定 OpenRouter API key。請在工作區根目錄的 .env 檔加入:OPENROUTER_API_KEY=sk-or-v1-你的key',
+        'label.envFile': '設定檔路徑',
         'result.saved': '已儲存',
         'result.cost': '成本',
-        'gif.note': 'GIF 動畫需要支援動畫的模型(例如 openai/gpt-image-2.6);PNG 透明背景不適用於 GIF。',
+        'gif.note': 'OpenRouter 目前尚未提供動畫 GIF 輸出,此選項暫不支援;PNG 透明背景亦不適用於 GIF。',
         'icons.note': '批次產生每個「設備 × 狀態」組合一張;固定 Seed 有助於保持整套圖標風格一致。',
       },
       en: {
@@ -121,9 +122,10 @@ window.__ModuleLoader__.load({
         'state.pending': 'Pending',
         'error.models': 'Failed to load model list',
         'hint.key': 'No OpenRouter API key configured. Add OPENROUTER_API_KEY=sk-or-v1-… to the .env file in the workspace root.',
+        'label.envFile': 'Config file',
         'result.saved': 'Saved',
         'result.cost': 'Cost',
-        'gif.note': 'GIF animation requires an animation-capable model (e.g. openai/gpt-image-2.6); transparency does not apply to GIF.',
+        'gif.note': 'Animated GIF output is not yet available through OpenRouter, so this option is currently unsupported; transparency does not apply to GIF.',
         'icons.note': 'Batch-generates one image per selected device × state combination; a fixed seed helps keep the icon set consistent.',
       },
     };
@@ -139,7 +141,10 @@ window.__ModuleLoader__.load({
     /* ---------------------------------------------------------------- */
 
     async function apiCall(op, init) {
-      const res = await fetch(`/studio/api?op=${encodeURIComponent(op)}`, init);
+      const res = await fetch(`/studio/api?op=${encodeURIComponent(op)}`, {
+        credentials: 'same-origin',
+        ...init,
+      });
       const body = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }));
       if (!body.ok) throw new Error(body.error || `HTTP ${res.status}`);
       return body;
@@ -585,23 +590,33 @@ window.__ModuleLoader__.load({
       const [tab, setTab] = useState('background');
       const [models, setModels] = useState(null);
       const [modelsError, setModelsError] = useState('');
+      const [keyStatus, setKeyStatus] = useState(null);
       const t = createTranslate(globalThis.__SBS_LOCALE__);
 
       useEffect(() => {
         let alive = true;
+        apiCall('status')
+          .then((body) => { if (alive) setKeyStatus(body); })
+          .catch(() => { if (alive) setKeyStatus(null); });
         apiCall('models')
           .then((body) => { if (alive) setModels(body.models || []); })
           .catch((err) => { if (alive) setModelsError(String(err.message || err)); });
         return () => { alive = false; };
       }, []);
 
+      const showKeyHint = (keyStatus && keyStatus.hasKey === false) || /OPENROUTER_API_KEY/.test(modelsError);
+
       return h('div', { className: 'sbs-root' },
         h('style', null, CSS),
         h('div', { className: 'sbs-header' },
           h('h1', null, t('app.title')),
           h('p', null, t('app.desc'))),
-        modelsError && /OPENROUTER_API_KEY/.test(modelsError)
-          ? h('div', { className: 'sbs-banner' }, t('hint.key'))
+        showKeyHint
+          ? h('div', { className: 'sbs-banner' },
+              h('div', null, t('hint.key')),
+              keyStatus && keyStatus.envFile
+                ? h('div', { className: 'sbs-note' }, `${t('label.envFile')}: ${keyStatus.envFile}`)
+                : null)
           : null,
         h('div', { className: 'sbs-tabs' },
           [['background', t('tab.background')], ['icons', t('tab.icons')], ['library', t('tab.library')]].map(([key, label]) =>
@@ -632,10 +647,10 @@ window.__ModuleLoader__.load({
     /* ---------------------------------------------------------------- */
 
     return {
-      inject: ['slots'],
+      inject: ['slots', 'locale'],
       apply(ctx) {
         try {
-          const locale = (ctx.get && ctx.get('locale')) || ctx.locale;
+          const locale = ctx.locale;
           globalThis.__SBS_LOCALE__ = locale;
           const t = createTranslate(locale);
 
