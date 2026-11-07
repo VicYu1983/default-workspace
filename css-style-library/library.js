@@ -242,7 +242,10 @@ export class LibraryStore {
     }
   }
 
-  /** Compact view for list rows; the full css ships only on request. */
+  /**
+   * Compact view for list rows: everything the panel needs to render a live
+   * preview (previewHtml always; the full css ships only on request).
+   */
   publicView(entry, includeCss = false) {
     const view = {
       id: entry.id,
@@ -253,7 +256,7 @@ export class LibraryStore {
       createdAt: entry.createdAt,
       updatedAt: entry.updatedAt,
       cssLength: entry.css.length,
-      hasPreviewHtml: entry.previewHtml !== '',
+      previewHtml: entry.previewHtml,
     }
     if (includeCss) view.css = entry.css
     return view

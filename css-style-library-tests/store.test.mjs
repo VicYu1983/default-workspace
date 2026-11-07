@@ -33,10 +33,16 @@ check('seed count', seeded.total === SEED_STYLES.length, `total=${seeded.total}`
 check('seed categories present', seeded.categories.length > 0)
 check('seed file written', (await fs.readFile(file, 'utf8')).includes('"schema_version": 1'))
 
-// 2. list compact rows hide css; includeCss shows it
+// 2. list compact rows hide css but carry previewHtml; includeCss shows css
 check('list hides css by default', seeded.styles.every((style) => style.css === undefined))
+check('list rows carry previewHtml', seeded.styles.every((style) => typeof style.previewHtml === 'string' && style.previewHtml.length > 0))
 const withCss = await store.list({ includeCss: true })
 check('list includeCss returns css', withCss.styles.every((style) => typeof style.css === 'string' && style.css.length > 0))
+check('panel-shaped list is render-ready', (() => {
+  // Exactly what the panel sends: every row must have css + previewHtml to feed the iframe.
+  const panelList = withCss.styles
+  return panelList.every((style) => style.css.length > 0 && style.previewHtml.length > 0)
+})())
 
 // 3. query search across name/tags/css
 const neon = await store.list({ query: '霓虹' })

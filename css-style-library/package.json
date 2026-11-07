@@ -1,6 +1,6 @@
 {
   "name": "@local/css-style-library",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "CSS style library: live-previewed, copy-ready snippets with full CRUD from the panel and agent tools.",
   "type": "module",

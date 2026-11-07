@@ -400,7 +400,9 @@ window.__ModuleLoader__.load({
 
         const loadEntries = React.useCallback(async (q, cat) => {
           try {
-            const data = await callHost({ op: 'list', query: q, category: cat, limit: 500 })
+            // includeCss is what feeds every card's live preview; without it
+            // the rows only carry cssLength and the previews render empty.
+            const data = await callHost({ op: 'list', query: q, category: cat, limit: 500, includeCss: true })
             setEntries(data.styles || [])
             setCategories(data.categories || [])
             setTotal(data.total || 0)

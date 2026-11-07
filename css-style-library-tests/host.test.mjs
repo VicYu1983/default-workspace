@@ -47,6 +47,11 @@ check('list summary mentions count', listed.summary.includes('樣式庫共'))
 check('list rows carry ids', listed.styles.every((s) => s.id.startsWith('st_')))
 check('list hides css', listed.styles.every((s) => s.css === undefined))
 
+// 2b. panel-shaped list: includeCss must return css AND previewHtml for every row
+const panelList = await tool.execute({ action: 'list', limit: 500, includeCss: true })
+check('panel list carries css', panelList.styles.every((s) => typeof s.css === 'string' && s.css.length > 0))
+check('panel list carries previewHtml', panelList.styles.every((s) => typeof s.previewHtml === 'string'))
+
 // 3. tool execute: create → get → update → delete round trip
 const made = await tool.execute({
   action: 'create',
