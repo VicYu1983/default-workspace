@@ -2,6 +2,87 @@
   "schema_version": 1,
   "styles": [
     {
+      "id": "st_mw6iwm3g93cf9996",
+      "name": "SVG 警示波紋",
+      "css": ".rect-ripple {\n  fill: none;\n  stroke: #f43f5e;\n  stroke-width: 2;\n  transform-box: fill-box;\n  transform-origin: center;\n  animation: rect-ripple-run 2.2s ease-out infinite;\n}\n@keyframes rect-ripple-run {\n  0% { transform: scale(1); opacity: 0.9; }\n  70%, 100% { transform: scale(1.45); opacity: 0; }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "rect",
+        "警示",
+        "波紋"
+      ],
+      "description": "異常設備向外擴散的漸淡波紋圈（雷達回波感）：在設備 rect 後面疊一個同尺寸、套用本類別的空框 rect 即可。比閃爍柔和，適合需要持續吸引注意但不刺眼的警報。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect class=\"rect-ripple\" x=\"45\" y=\"31\" width=\"70\" height=\"70\" rx=\"8\"/>\n    <rect x=\"45\" y=\"31\" width=\"70\" height=\"70\" rx=\"8\" fill=\"rgba(244,63,94,.16)\" stroke=\"#f43f5e\" stroke-width=\"1.5\"/>\n    <rect class=\"rect-ripple\" x=\"155\" y=\"41\" width=\"50\" height=\"50\" rx=\"6\" style=\"animation-delay:-1.1s\"/>\n    <rect x=\"155\" y=\"41\" width=\"50\" height=\"50\" rx=\"6\" fill=\"rgba(244,63,94,.16)\" stroke=\"#f43f5e\" stroke-width=\"1.5\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T14:53:16.636Z",
+      "updatedAt": "2026-11-07T14:53:16.636Z"
+    },
+    {
+      "id": "st_mw6iwm3e733e96d8",
+      "name": "SVG 四角選取框",
+      "css": ".rect-corners {\n  fill: none;\n  stroke: #fbbf24;\n  stroke-width: 2.5;\n  stroke-linecap: round;\n  stroke-dasharray: 6 19;\n  stroke-dashoffset: -3;\n  transition: stroke-dasharray 0.25s ease, stroke-dashoffset 0.25s ease;\n}\n.rect-corners:hover {\n  stroke-dasharray: 12 13;\n  stroke-dashoffset: -6;\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "rect",
+        "選取",
+        "HUD"
+      ],
+      "description": "單一 rect 做出 HUD 四角框：pathLength=\"100\" 配 dasharray，琥珀色短框落在四角；hover 時角落向外張開（在詳情視窗大預覽試滑）。限正方形 rect 角框才對齊四角；長方形時標記落在四邊中點，變成焦點框效果。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect x=\"30\" y=\"21\" width=\"70\" height=\"70\" rx=\"2\" fill=\"rgba(148,163,184,.08)\" stroke=\"none\"/>\n    <rect class=\"rect-corners\" x=\"30\" y=\"21\" width=\"70\" height=\"70\" pathLength=\"100\"/>\n    <rect x=\"140\" y=\"21\" width=\"80\" height=\"70\" rx=\"2\" fill=\"rgba(148,163,184,.08)\" stroke=\"none\"/>\n    <rect class=\"rect-corners\" x=\"140\" y=\"21\" width=\"80\" height=\"70\" pathLength=\"100\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T14:53:16.634Z",
+      "updatedAt": "2026-11-07T14:53:16.634Z"
+    },
+    {
+      "id": "st_mw6iwm3b90431115",
+      "name": "SVG 進度框線",
+      "css": ".rect-progress {\n  fill: rgba(56, 189, 248, 0.05);\n  stroke: #38bdf8;\n  stroke-width: 3;\n  stroke-linecap: round;\n  stroke-dasharray: var(--p, 30) 100;\n  transition: stroke-dasharray 0.6s ease;\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "rect",
+        "進度",
+        "變數"
+      ],
+      "description": "框線即進度條：需在 rect 上加 pathLength=\"100\"，並用 inline style 設定 --p（0–100，例如 style=\"--p: 62\"）。用 JS 更新 --p 時會平滑過渡。一個 rect 同時是外框與進度顯示。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect class=\"rect-progress\" x=\"20\" y=\"16\" width=\"56\" height=\"80\" pathLength=\"100\" style=\"--p: 25\"/>\n    <rect class=\"rect-progress\" x=\"92\" y=\"16\" width=\"56\" height=\"80\" pathLength=\"100\" style=\"--p: 62\"/>\n    <rect class=\"rect-progress\" x=\"164\" y=\"16\" width=\"56\" height=\"80\" pathLength=\"100\" style=\"--p: 88\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T14:53:16.631Z",
+      "updatedAt": "2026-11-07T14:53:16.631Z"
+    },
+    {
+      "id": "st_mw6iwm34cf0584ee",
+      "name": "SVG 液位填充",
+      "css": ".rect-level {\n  fill: rgba(56, 189, 248, 0.35);\n  transform-box: fill-box;\n  transform-origin: bottom;\n  animation: rect-level-run 5s ease-in-out infinite;\n}\n@keyframes rect-level-run {\n  0%, 100% { transform: scaleY(0.3); }\n  50% { transform: scaleY(0.78); }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "rect",
+        "液位",
+        "負載",
+        "動態"
+      ],
+      "description": "槽體/負載填充：內層 fill rect 以 transform-origin:bottom 呼吸升降，模擬液位或負載率。用法：畫一個 stroke 外框 rect，再疊一個同尺寸略內縮、套用本類別的填充 rect（不加 stroke）。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect x=\"30\" y=\"16\" width=\"60\" height=\"80\" rx=\"6\" fill=\"none\" stroke=\"#475569\" stroke-width=\"1.5\"/>\n    <rect class=\"rect-level\" x=\"31.5\" y=\"17.5\" width=\"57\" height=\"77\" rx=\"5\"/>\n    <rect x=\"150\" y=\"16\" width=\"60\" height=\"80\" rx=\"6\" fill=\"none\" stroke=\"#475569\" stroke-width=\"1.5\"/>\n    <rect class=\"rect-level\" x=\"151.5\" y=\"17.5\" width=\"57\" height=\"77\" rx=\"5\" style=\"animation-delay:-2.5s\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T14:53:16.623Z",
+      "updatedAt": "2026-11-07T14:53:16.623Z"
+    },
+    {
+      "id": "st_mw6fiweb16c219e5",
+      "name": "SVG hover 發光",
+      "css": ".rect-hover-glow {\n  fill: rgba(56, 189, 248, 0.05);\n  stroke: #475569;\n  stroke-width: 1.5;\n  cursor: pointer;\n  transition: fill 0.25s ease, stroke 0.25s ease, filter 0.25s ease;\n}\n.rect-hover-glow:hover {\n  fill: rgba(56, 189, 248, 0.18);\n  stroke: #38bdf8;\n  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "rect",
+        "hover",
+        "發光"
+      ],
+      "description": "滑入時填色亮起並帶 drop-shadow 外光暈，適合可點擊的設備框。在詳情視窗的大預覽裡直接滑過即可看到效果。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect class=\"rect-hover-glow\" x=\"20\" y=\"16\" width=\"90\" height=\"80\" rx=\"8\"/>\n    <rect class=\"rect-hover-glow\" x=\"130\" y=\"16\" width=\"90\" height=\"36\" rx=\"6\"/>\n    <rect class=\"rect-hover-glow\" x=\"130\" y=\"60\" width=\"90\" height=\"36\" rx=\"6\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T13:18:37.955Z",
+      "updatedAt": "2026-11-07T13:18:37.955Z"
+    },
+    {
       "id": "st_mw6fiwea891fbd94",
       "name": "SVG 警示閃爍",
       "css": ".rect-blink {\n  fill: rgba(244, 63, 94, 0.18);\n  stroke: #f43f5e;\n  stroke-width: 1.5;\n  animation: rect-blink-run 1.6s ease-in-out infinite;\n}\n@keyframes rect-blink-run {\n  0%, 100% { fill: rgba(244, 63, 94, 0.08); }\n  50% { fill: rgba(244, 63, 94, 0.30); }\n}",
@@ -379,20 +460,20 @@
       "updatedAt": "2026-11-07T11:27:16.893Z"
     },
     {
-      "id": "st_mw6fiweb16c219e5",
-      "name": "SVG hover 發光",
-      "css": ".rect-hover-glow {\n  fill: rgba(56, 189, 248, 0.05);\n  stroke: #475569;\n  stroke-width: 1.5;\n  cursor: pointer;\n  transition: fill 0.25s ease, stroke 0.25s ease, filter 0.25s ease;\n}\n.rect-hover-glow:hover {\n  fill: rgba(56, 189, 248, 0.18);\n  stroke: #38bdf8;\n  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));\n}",
+      "id": "st_mw6iwm3j5b5b315f",
+      "name": "SVG 管線流動",
+      "css": ".pipe-flow {\n  fill: none;\n  stroke: #22d3ee;\n  stroke-width: 2;\n  stroke-linecap: round;\n  stroke-dasharray: 10 14;\n  animation: pipe-flow-run 1.4s linear infinite;\n}\n@keyframes pipe-flow-run {\n  to { stroke-dashoffset: -24; }\n}",
       "category": "svg",
       "tags": [
         "SVG",
-        "rect",
-        "hover",
-        "發光"
+        "管線",
+        "流動",
+        "path"
       ],
-      "description": "滑入時填色亮起並帶 drop-shadow 外光暈，適合可點擊的設備框。在詳情視窗的大預覽裡直接滑過即可看到效果。",
-      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect class=\"rect-hover-glow\" x=\"20\" y=\"16\" width=\"90\" height=\"80\" rx=\"8\"/>\n    <rect class=\"rect-hover-glow\" x=\"130\" y=\"16\" width=\"90\" height=\"36\" rx=\"6\"/>\n    <rect class=\"rect-hover-glow\" x=\"130\" y=\"60\" width=\"90\" height=\"36\" rx=\"6\"/>\n  </svg>\n</div>",
-      "createdAt": "2026-11-07T13:18:37.955Z",
-      "updatedAt": "2026-11-07T13:18:37.955Z"
+      "description": "管內能量流動：適用 path/line/polyline/rect。用法：先畫一條較粗的深色管壁線，再疊一條同路徑、套用本類別的亮色虛線，虛線即沿管流動。改 stroke 顏色區分水/風/電。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <path d=\"M20 30 H110 V90 H220\" fill=\"none\" stroke=\"#1e293b\" stroke-width=\"8\"/>\n    <path class=\"pipe-flow\" d=\"M20 30 H110 V90 H220\"/>\n    <rect x=\"150\" y=\"45\" width=\"70\" height=\"46\" rx=\"6\" fill=\"none\" stroke=\"#1e293b\" stroke-width=\"8\"/>\n    <rect class=\"pipe-flow\" x=\"150\" y=\"45\" width=\"70\" height=\"46\" rx=\"6\" style=\"animation-direction:reverse\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T14:53:16.639Z",
+      "updatedAt": "2026-11-07T14:53:16.639Z"
     }
   ]
 }
