@@ -6,7 +6,7 @@
  * All CRUD lives here so the agent tool and the panel route run the exact same
  * code and can never drift apart.
  */
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import crypto from 'node:crypto'
 
@@ -155,6 +155,18 @@ export class LibraryStore {
     this.byId = new Map()
     this.loaded = false
     this.writing = null
+    this.stamp = null
+  }
+
+  /** mtime + size stamp used to notice writes from other processes. */
+  async stampOf() {
+    try {
+      const info = await stat(this.file)
+      return `${info.mtimeMs}:${info.size}`
+    } catch (error) {
+      if (error && error.code === 'ENOENT') return null
+      throw error
+    }
   }
 
   setStyles(styles) {
@@ -168,11 +180,21 @@ export class LibraryStore {
     this.byId = new Map(this.styles.map((entry) => [entry.id, entry]))
   }
 
-  /** Load the JSON document; seed it on first run when the file does not exist. */
+  /**
+   * Load the JSON document; seed it on first run when the file does not exist.
+   * Every op funnels through here, and a changed file stamp — another session's
+   * tool or an external writer — transparently reloads before the op proceeds.
+   */
   async init() {
-    if (this.loaded) return
+    const stamp = await this.stampOf()
+    if (this.loaded && stamp === this.stamp) return
     const raw = await this.read()
     if (raw === null) {
+      if (this.loaded) {
+        // The file vanished mid-session: keep the in-memory library, rewrite it.
+        await this.write(this.styles)
+        return
+      }
       const now = new Date().toISOString()
       const styles = this.seeds.map((seed) => {
         const entry = normalizeEntry(seed)
@@ -182,6 +204,7 @@ export class LibraryStore {
       })
       await this.write(styles)
       this.setStyles(styles)
+      this.stamp = await this.stampOf()
       this.loaded = true
       return
     }
@@ -205,6 +228,7 @@ export class LibraryStore {
       }
     }
     this.setStyles(styles)
+    this.stamp = stamp
     this.loaded = true
   }
 
@@ -240,6 +264,7 @@ export class LibraryStore {
     } finally {
       this.writing = null
     }
+    this.stamp = await this.stampOf()
   }
 
   /**

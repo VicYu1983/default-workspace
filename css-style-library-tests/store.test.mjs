@@ -111,6 +111,18 @@ await fs.writeFile(file, '{not json', 'utf8')
 const store3 = new LibraryStore({ file, seeds: [] })
 await expectError('corrupt file', 'library-corrupt', store3.list({}))
 
+// 12. writes from another process become visible without a new store instance
+const file2 = path.join(dir, 'external.json')
+const storeA = new LibraryStore({ file: file2, seeds: [] })
+await storeA.create({ name: 'A1', css: '.a1{}' })
+const storeB = new LibraryStore({ file: file2, seeds: [] })
+await storeB.create({ name: 'B1', css: '.b1{}' })
+const seenByA = await storeA.list({})
+check('external write visible to first store', seenByA.total === 2 && seenByA.styles.some((s) => s.name === 'B1'))
+await storeA.create({ name: 'A2', css: '.a2{}' })
+const seenByB = await storeB.list({})
+check('external write visible both directions', seenByB.total === 3 && seenByB.styles.some((s) => s.name === 'A2'))
+
 await fs.rm(dir, { recursive: true, force: true })
 console.log(failures === 0 ? 'ALL PASS' : `${failures} FAILURES`)
 process.exit(failures === 0 ? 0 : 1)

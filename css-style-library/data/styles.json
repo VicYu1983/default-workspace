@@ -2,6 +2,23 @@
   "schema_version": 1,
   "styles": [
     {
+      "id": "st_mw6bvz8m5b67f25a",
+      "name": "智慧建築監控背景",
+      "css": ".monitor-bg {\n  position: relative;\n  overflow: hidden;\n  background-color: #0b1420;\n  background-image:\n    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(56, 189, 248, 0.10), transparent 60%),\n    linear-gradient(rgba(56, 189, 248, 0.055) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(56, 189, 248, 0.055) 1px, transparent 1px);\n  background-size: auto, 28px 28px, 28px 28px;\n}\n.monitor-bg::before {\n  content: '';\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 0;\n  height: 40%;\n  background: linear-gradient(\n    180deg,\n    transparent,\n    rgba(56, 189, 248, 0.06) 42%,\n    rgba(125, 211, 252, 0.13) 50%,\n    rgba(56, 189, 248, 0.06) 58%,\n    transparent\n  );\n  pointer-events: none;\n  animation: monitor-scan 9s linear infinite;\n}\n.monitor-bg::after {\n  content: '';\n  position: absolute;\n  inset: 0;\n  background:\n    radial-gradient(circle 180px at 12% 85%, rgba(34, 211, 238, 0.08), transparent 70%),\n    radial-gradient(circle 220px at 88% 12%, rgba(56, 189, 248, 0.07), transparent 70%);\n  pointer-events: none;\n  animation: monitor-breathe 6.5s ease-in-out infinite alternate;\n}\n@keyframes monitor-scan {\n  from { transform: translateY(-110%); }\n  to { transform: translateY(350%); }\n}\n@keyframes monitor-breathe {\n  from { opacity: 0.55; }\n  to { opacity: 1; }\n}",
+      "category": "backgrounds",
+      "tags": [
+        "監控",
+        "科幻",
+        "動態",
+        "掃描線",
+        "大屏"
+      ],
+      "description": "深色低調科幻的中控監控背景：細網格、緩慢掃描光帶與邊角呼吸光暈。偽元素已設 pointer-events:none，上面放儀表板內容不影響操作。",
+      "previewHtml": "<div class=\"monitor-bg\" style=\"width:100%;max-width:320px;aspect-ratio:16/9;min-height:120px;border-radius:12px;border:1px solid rgba(56,189,248,.22)\">\n  <div style=\"position:absolute;left:5%;top:8%;width:30%;height:32%;border:1px solid rgba(56,189,248,.35);border-radius:6px;background:rgba(56,189,248,.06)\"></div>\n  <div style=\"position:absolute;left:5%;top:48%;width:44%;height:44%;border:1px solid rgba(56,189,248,.28);border-radius:6px;background:rgba(56,189,248,.04)\"></div>\n  <div style=\"position:absolute;right:5%;top:8%;width:48%;height:58%;border:1px solid rgba(56,189,248,.28);border-radius:6px;background:rgba(56,189,248,.05)\"></div>\n</div>",
+      "createdAt": "2026-11-07T11:36:49.701Z",
+      "updatedAt": "2026-11-07T11:37:40.488Z"
+    },
+    {
       "id": "st_mw6bjp9ae539224f",
       "name": "光暈柔霧背景",
       "css": ".bg-glow {\n  background-color: #0b1220;\n  background-image:\n    radial-gradient(ellipse 60% 50% at 20% 30%, rgba(99, 102, 241, 0.4), transparent),\n    radial-gradient(ellipse 50% 45% at 80% 70%, rgba(236, 72, 153, 0.32), transparent),\n    radial-gradient(ellipse 40% 40% at 60% 15%, rgba(34, 211, 238, 0.28), transparent);\n}",
