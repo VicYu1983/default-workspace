@@ -2,6 +2,86 @@
   "schema_version": 1,
   "styles": [
     {
+      "id": "st_mw6jdlau6409651c",
+      "name": "SVG 等寬數值（右對齊）",
+      "css": ".svg-value {\n  font: 600 15px/1 ui-monospace, SFMono-Regular, Consolas, monospace;\n  font-variant-numeric: tabular-nums;\n  text-anchor: end;\n  fill: #7dd3fc;\n}\n.svg-value-label {\n  font: 500 12px/1 system-ui, sans-serif;\n  text-anchor: start;\n  fill: #94a3b8;\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "text",
+        "數值",
+        "對齊"
+      ],
+      "description": "監控數值必備：tabular-nums 等寬位數 + text-anchor:end 右對齊，數值更新時左緣不抖動。標籤列用 text-anchor:start 各自錨定即可成對。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <text x=\"20\" y=\"34\" class=\"svg-value-label\">冷機能力</text>\n    <text x=\"220\" y=\"34\" class=\"svg-value\">12.4 kW</text>\n    <text x=\"20\" y=\"62\" class=\"svg-value-label\">水流量</text>\n    <text x=\"220\" y=\"62\" class=\"svg-value\">1,028 m³/h</text>\n    <text x=\"20\" y=\"90\" class=\"svg-value-label\">運轉效率</text>\n    <text x=\"220\" y=\"90\" class=\"svg-value\">62.7 %</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:06:28.758Z",
+      "updatedAt": "2026-11-07T15:06:28.758Z"
+    },
+    {
+      "id": "st_mw6jdlasa5624bd0",
+      "name": "SVG 警示標籤閃爍",
+      "css": ".svg-text-blink {\n  font: 700 14px/1 system-ui, sans-serif;\n  letter-spacing: 1px;\n  fill: #f43f5e;\n  animation: svg-text-blink-run 1.6s ease-in-out infinite;\n}\n@keyframes svg-text-blink-run {\n  0%, 100% { fill: rgba(244, 63, 94, 0.35); }\n  50% { fill: rgba(244, 63, 94, 1); }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "text",
+        "警示",
+        "閃爍"
+      ],
+      "description": "fill 脈動閃爍的警示文字，配 SVG 警示波紋/警示閃爍框使用。換 keyframes 裡的顏色即可變其他狀態色。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <text x=\"20\" y=\"38\" class=\"svg-text-blink\">⚠ CH-01 高溫警報</text>\n    <text x=\"20\" y=\"70\" class=\"svg-text-blink\" style=\"animation-delay:-0.8s\">⚠ 水位過低</text>\n    <text x=\"20\" y=\"98\" font-size=\"13\" fill=\"#94a3b8\">正常標籤不受影響</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:06:28.756Z",
+      "updatedAt": "2026-11-07T15:06:28.756Z"
+    },
+    {
+      "id": "st_mw6jdlaqdab3baa9",
+      "name": "SVG 打字機寫字",
+      "css": ".svg-write {\n  font: 700 22px/1 system-ui, sans-serif;\n  letter-spacing: 2px;\n  fill: rgba(125, 211, 252, 0);\n  stroke: #7dd3fc;\n  stroke-width: 1;\n  stroke-dasharray: 220;\n  stroke-dashoffset: 220;\n  animation: svg-write-draw 1.6s ease-out forwards, svg-write-fill 0.8s ease 1.5s forwards;\n}\n@keyframes svg-write-draw {\n  to { stroke-dashoffset: 0; }\n}\n@keyframes svg-write-fill {\n  to { fill: rgba(125, 211, 252, 0.95); }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "text",
+        "動畫",
+        "入場"
+      ],
+      "description": "字形輪廓先被「寫」出來、填充再淡入的入場動畫。stroke-dasharray 值需大於最寬字形的周長（字號越大值越大，22px 約 220）；繪製完成後保留細描邊。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <text x=\"120\" y=\"50\" text-anchor=\"middle\" class=\"svg-write\">SMART BUILDING</text>\n    <text x=\"120\" y=\"88\" text-anchor=\"middle\" class=\"svg-write\" style=\"animation-delay:1.2s\">智慧監控中心</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:06:28.754Z",
+      "updatedAt": "2026-11-07T15:06:28.754Z"
+    },
+    {
+      "id": "st_mw6jdlal72d5c7d7",
+      "name": "SVG 描邊標籤字",
+      "css": ".svg-label-outline {\n  font: 700 13px/1 system-ui, sans-serif;\n  fill: #e2e8f0;\n  stroke: #0b1420;\n  stroke-width: 3;\n  stroke-linejoin: round;\n  paint-order: stroke;\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "text",
+        "標籤",
+        "描邊"
+      ],
+      "description": "paint-order: stroke 讓描邊畫在填充後面，形成外框暈圈——深色或淺色、雜亂背景上都清晰可讀。設備標籤必備；改 fill/stroke 即換配色。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect x=\"10\" y=\"10\" width=\"220\" height=\"42\" rx=\"8\" fill=\"#334155\"/>\n    <text x=\"20\" y=\"37\" class=\"svg-label-outline\">AHU-3 冷卻水塔</text>\n    <rect x=\"10\" y=\"60\" width=\"220\" height=\"42\" rx=\"8\" fill=\"#e2e8f0\"/>\n    <text x=\"20\" y=\"87\" class=\"svg-label-outline\">深淺背景都清晰</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:06:28.748Z",
+      "updatedAt": "2026-11-07T15:06:28.748Z"
+    },
+    {
+      "id": "st_mw6iwm3j5b5b315f",
+      "name": "SVG 管線流動",
+      "css": ".pipe-flow {\n  fill: none;\n  stroke: #22d3ee;\n  stroke-width: 2;\n  stroke-linecap: round;\n  stroke-dasharray: 10 14;\n  animation: pipe-flow-run 1.4s linear infinite;\n}\n@keyframes pipe-flow-run {\n  to { stroke-dashoffset: -24; }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "管線",
+        "流動",
+        "path"
+      ],
+      "description": "管內能量流動：適用 path/line/polyline/rect。用法：先畫一條較粗的深色管壁線，再疊一條同路徑、套用本類別的亮色虛線，虛線即沿管流動。改 stroke 顏色區分水/風/電。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <path d=\"M20 30 H110 V90 H220\" fill=\"none\" stroke=\"#1e293b\" stroke-width=\"8\"/>\n    <path class=\"pipe-flow\" d=\"M20 30 H110 V90 H220\"/>\n    <rect x=\"150\" y=\"45\" width=\"70\" height=\"46\" rx=\"6\" fill=\"none\" stroke=\"#1e293b\" stroke-width=\"8\"/>\n    <rect class=\"pipe-flow\" x=\"150\" y=\"45\" width=\"70\" height=\"46\" rx=\"6\" style=\"animation-direction:reverse\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T14:53:16.639Z",
+      "updatedAt": "2026-11-07T14:53:16.639Z"
+    },
+    {
       "id": "st_mw6iwm3g93cf9996",
       "name": "SVG 警示波紋",
       "css": ".rect-ripple {\n  fill: none;\n  stroke: #f43f5e;\n  stroke-width: 2;\n  transform-box: fill-box;\n  transform-origin: center;\n  animation: rect-ripple-run 2.2s ease-out infinite;\n}\n@keyframes rect-ripple-run {\n  0% { transform: scale(1); opacity: 0.9; }\n  70%, 100% { transform: scale(1.45); opacity: 0; }\n}",
@@ -460,20 +540,20 @@
       "updatedAt": "2026-11-07T11:27:16.893Z"
     },
     {
-      "id": "st_mw6iwm3j5b5b315f",
-      "name": "SVG 管線流動",
-      "css": ".pipe-flow {\n  fill: none;\n  stroke: #22d3ee;\n  stroke-width: 2;\n  stroke-linecap: round;\n  stroke-dasharray: 10 14;\n  animation: pipe-flow-run 1.4s linear infinite;\n}\n@keyframes pipe-flow-run {\n  to { stroke-dashoffset: -24; }\n}",
+      "id": "st_mw6jdlawdbdb8cac",
+      "name": "SVG 漸層金屬字",
+      "css": ".svg-metal-text {\n  font: 800 24px/1 system-ui, sans-serif;\n  letter-spacing: 2px;\n  fill: url(#svg-metal-grad);\n}",
       "category": "svg",
       "tags": [
         "SVG",
-        "管線",
-        "流動",
-        "path"
+        "text",
+        "漸層",
+        "標題"
       ],
-      "description": "管內能量流動：適用 path/line/polyline/rect。用法：先畫一條較粗的深色管壁線，再疊一條同路徑、套用本類別的亮色虛線，虛線即沿管流動。改 stroke 顏色區分水/風/電。",
-      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <path d=\"M20 30 H110 V90 H220\" fill=\"none\" stroke=\"#1e293b\" stroke-width=\"8\"/>\n    <path class=\"pipe-flow\" d=\"M20 30 H110 V90 H220\"/>\n    <rect x=\"150\" y=\"45\" width=\"70\" height=\"46\" rx=\"6\" fill=\"none\" stroke=\"#1e293b\" stroke-width=\"8\"/>\n    <rect class=\"pipe-flow\" x=\"150\" y=\"45\" width=\"70\" height=\"46\" rx=\"6\" style=\"animation-direction:reverse\"/>\n  </svg>\n</div>",
-      "createdAt": "2026-11-07T14:53:16.639Z",
-      "updatedAt": "2026-11-07T14:53:16.639Z"
+      "description": "fill: url(#id) 把漸層灌進字形——金屬感標題。需在 markup 的 <defs> 放漸層定義（見示範），id 可自行替換；漸層用戶座標（gradientUnits=\"userSpaceOnUse\"）可精準控制縱向範圍。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <defs>\n      <linearGradient id=\"svg-metal-grad\" x1=\"0\" y1=\"20\" x2=\"0\" y2=\"60\" gradientUnits=\"userSpaceOnUse\">\n        <stop offset=\"0\" stop-color=\"#f1f5f9\"/>\n        <stop offset=\"0.55\" stop-color=\"#94a3b8\"/>\n        <stop offset=\"1\" stop-color=\"#475569\"/>\n      </linearGradient>\n    </defs>\n    <text x=\"120\" y=\"52\" text-anchor=\"middle\" class=\"svg-metal-text\">MONITORING</text>\n    <text x=\"120\" y=\"88\" text-anchor=\"middle\" font-size=\"11\" fill=\"#64748b\" letter-spacing=\"4\">CONTROL CENTER</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:06:28.760Z",
+      "updatedAt": "2026-11-07T15:06:28.760Z"
     }
   ]
 }
