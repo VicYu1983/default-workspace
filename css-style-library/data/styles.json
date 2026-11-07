@@ -313,6 +313,22 @@
       "previewHtml": "<span class=\"tooltip-tip\" data-tip=\"我是工具提示！\">滑過我</span>",
       "createdAt": "2026-11-07T11:27:16.893Z",
       "updatedAt": "2026-11-07T11:27:16.893Z"
+    },
+    {
+      "id": "st_mw6cozsh3266f47e",
+      "name": "極光漸層背景",
+      "css": ".aurora-bg {\n  position: relative;\n  overflow: hidden;\n  background-color: #0a1128;\n}\n.aurora-bg::before {\n  content: '';\n  position: absolute;\n  inset: -20%;\n  background:\n    radial-gradient(ellipse 45% 40% at 25% 30%, rgba(45, 212, 191, 0.20), transparent 70%),\n    radial-gradient(ellipse 40% 45% at 75% 65%, rgba(129, 140, 248, 0.18), transparent 70%);\n  pointer-events: none;\n  animation: aurora-drift-a 26s ease-in-out infinite alternate;\n}\n.aurora-bg::after {\n  content: '';\n  position: absolute;\n  inset: -20%;\n  background:\n    radial-gradient(ellipse 50% 35% at 60% 20%, rgba(52, 211, 153, 0.14), transparent 70%),\n    radial-gradient(ellipse 35% 40% at 20% 75%, rgba(56, 189, 248, 0.15), transparent 70%);\n  pointer-events: none;\n  animation: aurora-drift-b 32s ease-in-out infinite alternate;\n}\n@keyframes aurora-drift-a {\n  from { transform: translate3d(-4%, -3%, 0) rotate(0deg) scale(1); }\n  to { transform: translate3d(5%, 4%, 0) rotate(6deg) scale(1.08); }\n}\n@keyframes aurora-drift-b {\n  from { transform: translate3d(4%, 3%, 0) scale(1.05); }\n  to { transform: translate3d(-5%, -4%, 0) scale(1); }\n}",
+      "category": "backgrounds",
+      "tags": [
+        "極光",
+        "漸層",
+        "動態",
+        "深色"
+      ],
+      "description": "深藍夜色底上四團極光色暈（青綠、靛紫、翠綠、水藍）以 26–32 秒週期緩慢漂移變形，氣氛柔和不搶內容；偽元素已設 pointer-events:none。",
+      "previewHtml": "<div class=\"aurora-bg\" style=\"width:100%;max-width:320px;aspect-ratio:16/9;min-height:120px;border-radius:12px;border:1px solid rgba(129,140,248,.25)\"></div>",
+      "createdAt": "2026-11-07T11:59:23.440Z",
+      "updatedAt": "2026-11-07T11:59:23.440Z"
     }
   ]
 }
