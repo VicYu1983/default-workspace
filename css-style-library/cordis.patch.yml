@@ -1,0 +1,3 @@
+- insert:
+    - id: css-style-library
+      name: '@local/css-style-library'

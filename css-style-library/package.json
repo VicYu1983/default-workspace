@@ -1,0 +1,32 @@
+{
+  "name": "@local/css-style-library",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CSS style library: live-previewed, copy-ready snippets with full CRUD from the panel and agent tools.",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./library": "./library.js",
+    "./seed": "./seed.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "library.js",
+    "seed.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  }
+}
