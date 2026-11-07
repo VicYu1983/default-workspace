@@ -2,6 +2,38 @@
   "schema_version": 1,
   "styles": [
     {
+      "id": "st_mw6l8djpbb873b98",
+      "name": "SVG 主按鈕套組",
+      "css": ".svg-btn {\n  cursor: pointer;\n  outline: none;\n}\n.svg-btn-bg {\n  fill: url(#svg-btn-grad) #6366f1;\n  transform-box: fill-box;\n  transform-origin: center;\n  transition: transform 0.15s ease, filter 0.2s ease, stroke 0.2s ease;\n}\n.svg-btn:hover .svg-btn-bg {\n  transform: translateY(-2px);\n  filter: drop-shadow(0 6px 12px rgba(99, 102, 241, 0.45));\n}\n.svg-btn:active .svg-btn-bg {\n  transform: translateY(0) scale(0.97);\n  filter: drop-shadow(0 2px 6px rgba(99, 102, 241, 0.3));\n}\n.svg-btn:focus-visible .svg-btn-bg {\n  stroke: #fde047;\n  stroke-width: 2;\n}\n.svg-btn-label {\n  font: 600 14px/1 system-ui, sans-serif;\n  fill: #fff;\n  text-anchor: middle;\n  dominant-baseline: middle;\n  transition: fill 0.2s ease;\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "button",
+        "按鈕",
+        "hover"
+      ],
+      "description": "成對 class 的 SVG 按鈕：<g class=\"svg-btn\" role=\"button\" tabindex=\"0\"> 包 rect（.svg-btn-bg）與置中 text（.svg-btn-label），hover 時一起上浮發光、active 按下、focus 亮外框。垂直置中靠 dominant-baseline:middle；漸層缺 defs 時自動退回 fallback 色碼。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <defs>\n      <linearGradient id=\"svg-btn-grad\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">\n        <stop offset=\"0\" stop-color=\"#818cf8\"/>\n        <stop offset=\"1\" stop-color=\"#6366f1\"/>\n      </linearGradient>\n    </defs>\n    <g class=\"svg-btn\" role=\"button\" tabindex=\"0\">\n      <rect class=\"svg-btn-bg\" x=\"35\" y=\"28\" width=\"170\" height=\"42\" rx=\"12\"/>\n      <text class=\"svg-btn-label\" x=\"120\" y=\"49\">立即開始</text>\n    </g>\n    <text x=\"120\" y=\"96\" text-anchor=\"middle\" font-size=\"10\" fill=\"#64748b\">hover 上浮發光 · active 按下 · Tab 聚焦</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:58:24.660Z",
+      "updatedAt": "2026-11-07T15:58:24.660Z"
+    },
+    {
+      "id": "st_mw6jkhfl78acec57",
+      "name": "SVG 打字機循環",
+      "css": ".svg-write-loop {\n  font: 700 22px/1 system-ui, sans-serif;\n  letter-spacing: 2px;\n  fill: rgba(125, 211, 252, 0);\n  stroke: #7dd3fc;\n  stroke-width: 1;\n  stroke-dasharray: 220;\n  stroke-dashoffset: 220;\n  opacity: 0;\n  animation: svg-write-loop-run 5s ease-in-out infinite;\n}\n@keyframes svg-write-loop-run {\n  0% { stroke-dashoffset: 220; fill: rgba(125, 211, 252, 0); opacity: 0; }\n  6% { opacity: 1; }\n  38% { stroke-dashoffset: 0; fill: rgba(125, 211, 252, 0); }\n  52% { fill: rgba(125, 211, 252, 0.95); opacity: 1; }\n  80% { stroke-dashoffset: 0; fill: rgba(125, 211, 252, 0.95); opacity: 1; }\n  92% { opacity: 0; }\n  100% { stroke-dashoffset: 220; fill: rgba(125, 211, 252, 0); opacity: 0; }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "text",
+        "動畫",
+        "循環"
+      ],
+      "description": "打字機寫字動畫的無限循環版：寫出→填充→停留→淡出→看不見時重置。把 draw 與 fill 合併成單一 keyframes 才能整體循環；dasharray 值隨字號調大（22px 約 220）。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <text x=\"120\" y=\"50\" text-anchor=\"middle\" class=\"svg-write-loop\">SMART BUILDING</text>\n    <text x=\"120\" y=\"88\" text-anchor=\"middle\" class=\"svg-write-loop\" style=\"animation-delay:-2.5s\">智慧監控中心</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:11:50.337Z",
+      "updatedAt": "2026-11-07T15:11:50.337Z"
+    },
+    {
       "id": "st_mw6jkhff08542f88",
       "name": "SVG 框線繪製循環",
       "css": ".rect-draw-loop {\n  fill: rgba(56, 189, 248, 0.05);\n  stroke: #38bdf8;\n  stroke-width: 2;\n  stroke-linejoin: round;\n  stroke-dasharray: 100;\n  stroke-dashoffset: 100;\n  opacity: 0;\n  animation: rect-draw-loop-run 4s ease-in-out infinite;\n}\n@keyframes rect-draw-loop-run {\n  0% { stroke-dashoffset: 100; opacity: 0; }\n  6% { opacity: 1; }\n  42% { stroke-dashoffset: 0; opacity: 1; }\n  70% { stroke-dashoffset: 0; opacity: 1; }\n  90% { opacity: 0; }\n  100% { stroke-dashoffset: 100; opacity: 0; }\n}",
@@ -572,20 +604,20 @@
       "updatedAt": "2026-11-07T11:27:16.893Z"
     },
     {
-      "id": "st_mw6jkhfl78acec57",
-      "name": "SVG 打字機循環",
-      "css": ".svg-write-loop {\n  font: 700 22px/1 system-ui, sans-serif;\n  letter-spacing: 2px;\n  fill: rgba(125, 211, 252, 0);\n  stroke: #7dd3fc;\n  stroke-width: 1;\n  stroke-dasharray: 220;\n  stroke-dashoffset: 220;\n  opacity: 0;\n  animation: svg-write-loop-run 5s ease-in-out infinite;\n}\n@keyframes svg-write-loop-run {\n  0% { stroke-dashoffset: 220; fill: rgba(125, 211, 252, 0); opacity: 0; }\n  6% { opacity: 1; }\n  38% { stroke-dashoffset: 0; fill: rgba(125, 211, 252, 0); }\n  52% { fill: rgba(125, 211, 252, 0.95); opacity: 1; }\n  80% { stroke-dashoffset: 0; fill: rgba(125, 211, 252, 0.95); opacity: 1; }\n  92% { opacity: 0; }\n  100% { stroke-dashoffset: 220; fill: rgba(125, 211, 252, 0); opacity: 0; }\n}",
+      "id": "st_mw6l8djue4fbe5aa",
+      "name": "SVG 幽靈圖示鈕",
+      "css": ".svg-btn-ghost {\n  cursor: pointer;\n  outline: none;\n}\n.svg-btn-ghost-bg {\n  fill: transparent;\n  stroke: #64748b;\n  stroke-width: 1.5;\n  transition: fill 0.2s ease, stroke 0.2s ease;\n}\n.svg-btn-ghost:hover .svg-btn-ghost-bg {\n  fill: rgba(56, 189, 248, 0.14);\n  stroke: #38bdf8;\n}\n.svg-btn-ghost:active .svg-btn-ghost-bg {\n  fill: rgba(56, 189, 248, 0.26);\n}\n.svg-btn-ghost-icon {\n  font: 500 15px/1 system-ui, sans-serif;\n  text-anchor: middle;\n  dominant-baseline: middle;\n  fill: #94a3b8;\n  pointer-events: none;\n  transition: fill 0.2s ease;\n}\n.svg-btn-ghost:hover .svg-btn-ghost-icon {\n  fill: #7dd3fc;\n}",
       "category": "svg",
       "tags": [
         "SVG",
-        "text",
-        "動畫",
-        "循環"
+        "button",
+        "圖示",
+        "hover"
       ],
-      "description": "打字機寫字動畫的無限循環版：寫出→填充→停留→淡出→看不見時重置。把 draw 與 fill 合併成單一 keyframes 才能整體循環；dasharray 值隨字號調大（22px 約 220）。",
-      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <text x=\"120\" y=\"50\" text-anchor=\"middle\" class=\"svg-write-loop\">SMART BUILDING</text>\n    <text x=\"120\" y=\"88\" text-anchor=\"middle\" class=\"svg-write-loop\" style=\"animation-delay:-2.5s\">智慧監控中心</text>\n  </svg>\n</div>",
-      "createdAt": "2026-11-07T15:11:50.337Z",
-      "updatedAt": "2026-11-07T15:11:50.337Z"
+      "description": "工具列小按鈕：透明底細外框，hover 才填色亮字。同樣用群組配對 class（.svg-btn-ghost 包 bg 與 icon），圖示用文字符號即可（⚙ ✕ ＋…）。無障礙記得加 role=\"button\" tabindex=\"0\"。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <g class=\"svg-btn-ghost\" role=\"button\" tabindex=\"0\">\n      <circle class=\"svg-btn-ghost-bg\" cx=\"50\" cy=\"50\" r=\"18\"/>\n      <text class=\"svg-btn-ghost-icon\" x=\"50\" y=\"51\">＋</text>\n    </g>\n    <g class=\"svg-btn-ghost\" role=\"button\" tabindex=\"0\">\n      <rect class=\"svg-btn-ghost-bg\" x=\"100\" y=\"32\" width=\"36\" height=\"36\" rx=\"9\"/>\n      <text class=\"svg-btn-ghost-icon\" x=\"118\" y=\"51\">⚙</text>\n    </g>\n    <g class=\"svg-btn-ghost\" role=\"button\" tabindex=\"0\">\n      <rect class=\"svg-btn-ghost-bg\" x=\"168\" y=\"32\" width=\"36\" height=\"36\" rx=\"9\"/>\n      <text class=\"svg-btn-ghost-icon\" x=\"186\" y=\"51\">✕</text>\n    </g>\n    <text x=\"120\" y=\"96\" text-anchor=\"middle\" font-size=\"10\" fill=\"#64748b\">hover 填色亮字 · 圓形與圓角方形皆可</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:58:24.666Z",
+      "updatedAt": "2026-11-07T15:58:24.666Z"
     }
   ]
 }
