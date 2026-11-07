@@ -2,6 +2,70 @@
   "schema_version": 1,
   "styles": [
     {
+      "id": "st_mw6fiwea891fbd94",
+      "name": "SVG 警示閃爍",
+      "css": ".rect-blink {\n  fill: rgba(244, 63, 94, 0.18);\n  stroke: #f43f5e;\n  stroke-width: 1.5;\n  animation: rect-blink-run 1.6s ease-in-out infinite;\n}\n@keyframes rect-blink-run {\n  0%, 100% { fill: rgba(244, 63, 94, 0.08); }\n  50% { fill: rgba(244, 63, 94, 0.30); }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "rect",
+        "警示",
+        "閃爍"
+      ],
+      "description": "警示狀態閃爍：填充色與強度在紅色系間脈動，適合標記異常設備。把 fill/stroke 的顏色換掉即可變成其他狀態色。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect class=\"rect-blink\" x=\"20\" y=\"16\" width=\"90\" height=\"80\" rx=\"8\"/>\n    <rect class=\"rect-blink\" x=\"130\" y=\"16\" width=\"90\" height=\"36\" rx=\"6\" style=\"animation-delay:.8s\"/>\n    <rect x=\"130\" y=\"60\" width=\"90\" height=\"36\" rx=\"6\" fill=\"rgba(148,163,184,.12)\" stroke=\"#475569\" stroke-width=\"1.5\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T13:18:37.954Z",
+      "updatedAt": "2026-11-07T13:18:37.954Z"
+    },
+    {
+      "id": "st_mw6fiwe735a262dc",
+      "name": "SVG 虛線流動框",
+      "css": ".rect-flow {\n  fill: rgba(56, 189, 248, 0.06);\n  stroke: #38bdf8;\n  stroke-width: 1.5;\n  stroke-dasharray: 6 4;\n  animation: rect-flow-run 1.2s linear infinite;\n}\n@keyframes rect-flow-run {\n  to { stroke-dashoffset: -10; }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "rect",
+        "虛線",
+        "流動"
+      ],
+      "description": "虛線沿框線持續流動（行軍蟻效果），虛線長度為絕對 px、任何尺寸 rect 外觀一致，不需 pathLength。適合標記選中設備或資料流動感。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect class=\"rect-flow\" x=\"20\" y=\"16\" width=\"90\" height=\"80\" rx=\"8\"/>\n    <rect class=\"rect-flow\" x=\"130\" y=\"16\" width=\"90\" height=\"36\" rx=\"6\"/>\n    <rect class=\"rect-flow\" x=\"130\" y=\"60\" width=\"90\" height=\"36\" rx=\"6\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T13:18:37.951Z",
+      "updatedAt": "2026-11-07T13:18:37.951Z"
+    },
+    {
+      "id": "st_mw6fiwdy5e25c693",
+      "name": "SVG 框線繪製動畫",
+      "css": ".rect-draw {\n  fill: rgba(56, 189, 248, 0.05);\n  stroke: #38bdf8;\n  stroke-width: 2;\n  stroke-linejoin: round;\n  stroke-dasharray: 100;\n  stroke-dashoffset: 100;\n  animation: rect-draw-run 2.2s ease-out forwards;\n}\n@keyframes rect-draw-run {\n  to { stroke-dashoffset: 0; }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "rect",
+        "描邊",
+        "動畫"
+      ],
+      "description": "框線自動描繪動畫：使用 pathLength=\"100\" 正規化，任何尺寸的 <rect> 都能直接套用（需在 rect 上加 pathLength=\"100\"）。適合圖面載入時的入場效果。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect class=\"rect-draw\" x=\"20\" y=\"16\" width=\"80\" height=\"80\" rx=\"8\" pathLength=\"100\"/>\n    <rect class=\"rect-draw\" x=\"140\" y=\"16\" width=\"80\" height=\"40\" rx=\"8\" pathLength=\"100\" style=\"animation-delay:.5s\"/>\n    <rect class=\"rect-draw\" x=\"140\" y=\"70\" width=\"80\" height=\"26\" rx=\"6\" pathLength=\"100\" style=\"animation-delay:1s\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T13:18:37.941Z",
+      "updatedAt": "2026-11-07T13:18:37.941Z"
+    },
+    {
+      "id": "st_mw6cozsh3266f47e",
+      "name": "極光漸層背景",
+      "css": ".aurora-bg {\n  position: relative;\n  overflow: hidden;\n  background-color: #0a1128;\n}\n.aurora-bg::before {\n  content: '';\n  position: absolute;\n  inset: -20%;\n  background:\n    radial-gradient(ellipse 45% 40% at 25% 30%, rgba(45, 212, 191, 0.20), transparent 70%),\n    radial-gradient(ellipse 40% 45% at 75% 65%, rgba(129, 140, 248, 0.18), transparent 70%);\n  pointer-events: none;\n  animation: aurora-drift-a 26s ease-in-out infinite alternate;\n}\n.aurora-bg::after {\n  content: '';\n  position: absolute;\n  inset: -20%;\n  background:\n    radial-gradient(ellipse 50% 35% at 60% 20%, rgba(52, 211, 153, 0.14), transparent 70%),\n    radial-gradient(ellipse 35% 40% at 20% 75%, rgba(56, 189, 248, 0.15), transparent 70%);\n  pointer-events: none;\n  animation: aurora-drift-b 32s ease-in-out infinite alternate;\n}\n@keyframes aurora-drift-a {\n  from { transform: translate3d(-4%, -3%, 0) rotate(0deg) scale(1); }\n  to { transform: translate3d(5%, 4%, 0) rotate(6deg) scale(1.08); }\n}\n@keyframes aurora-drift-b {\n  from { transform: translate3d(4%, 3%, 0) scale(1.05); }\n  to { transform: translate3d(-5%, -4%, 0) scale(1); }\n}",
+      "category": "backgrounds",
+      "tags": [
+        "極光",
+        "漸層",
+        "動態",
+        "深色"
+      ],
+      "description": "深藍夜色底上四團極光色暈（青綠、靛紫、翠綠、水藍）以 26–32 秒週期緩慢漂移變形，氣氛柔和不搶內容；偽元素已設 pointer-events:none。",
+      "previewHtml": "<div class=\"aurora-bg\" style=\"width:100%;max-width:320px;aspect-ratio:16/9;min-height:120px;border-radius:12px;border:1px solid rgba(129,140,248,.25)\"></div>",
+      "createdAt": "2026-11-07T11:59:23.440Z",
+      "updatedAt": "2026-11-07T11:59:23.440Z"
+    },
+    {
       "id": "st_mw6bvz8m5b67f25a",
       "name": "智慧建築監控背景",
       "css": ".monitor-bg {\n  position: relative;\n  overflow: hidden;\n  background-color: #0b1420;\n  background-image:\n    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(56, 189, 248, 0.10), transparent 60%),\n    linear-gradient(rgba(56, 189, 248, 0.055) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(56, 189, 248, 0.055) 1px, transparent 1px);\n  background-size: auto, 28px 28px, 28px 28px;\n}\n.monitor-bg::before {\n  content: '';\n  position: absolute;\n  left: 0;\n  right: 0;\n  top: 0;\n  height: 40%;\n  background: linear-gradient(\n    180deg,\n    transparent,\n    rgba(56, 189, 248, 0.06) 42%,\n    rgba(125, 211, 252, 0.13) 50%,\n    rgba(56, 189, 248, 0.06) 58%,\n    transparent\n  );\n  pointer-events: none;\n  animation: monitor-scan 9s linear infinite;\n}\n.monitor-bg::after {\n  content: '';\n  position: absolute;\n  inset: 0;\n  background:\n    radial-gradient(circle 180px at 12% 85%, rgba(34, 211, 238, 0.08), transparent 70%),\n    radial-gradient(circle 220px at 88% 12%, rgba(56, 189, 248, 0.07), transparent 70%);\n  pointer-events: none;\n  animation: monitor-breathe 6.5s ease-in-out infinite alternate;\n}\n@keyframes monitor-scan {\n  from { transform: translateY(-110%); }\n  to { transform: translateY(350%); }\n}\n@keyframes monitor-breathe {\n  from { opacity: 0.55; }\n  to { opacity: 1; }\n}",
@@ -315,20 +379,20 @@
       "updatedAt": "2026-11-07T11:27:16.893Z"
     },
     {
-      "id": "st_mw6cozsh3266f47e",
-      "name": "極光漸層背景",
-      "css": ".aurora-bg {\n  position: relative;\n  overflow: hidden;\n  background-color: #0a1128;\n}\n.aurora-bg::before {\n  content: '';\n  position: absolute;\n  inset: -20%;\n  background:\n    radial-gradient(ellipse 45% 40% at 25% 30%, rgba(45, 212, 191, 0.20), transparent 70%),\n    radial-gradient(ellipse 40% 45% at 75% 65%, rgba(129, 140, 248, 0.18), transparent 70%);\n  pointer-events: none;\n  animation: aurora-drift-a 26s ease-in-out infinite alternate;\n}\n.aurora-bg::after {\n  content: '';\n  position: absolute;\n  inset: -20%;\n  background:\n    radial-gradient(ellipse 50% 35% at 60% 20%, rgba(52, 211, 153, 0.14), transparent 70%),\n    radial-gradient(ellipse 35% 40% at 20% 75%, rgba(56, 189, 248, 0.15), transparent 70%);\n  pointer-events: none;\n  animation: aurora-drift-b 32s ease-in-out infinite alternate;\n}\n@keyframes aurora-drift-a {\n  from { transform: translate3d(-4%, -3%, 0) rotate(0deg) scale(1); }\n  to { transform: translate3d(5%, 4%, 0) rotate(6deg) scale(1.08); }\n}\n@keyframes aurora-drift-b {\n  from { transform: translate3d(4%, 3%, 0) scale(1.05); }\n  to { transform: translate3d(-5%, -4%, 0) scale(1); }\n}",
-      "category": "backgrounds",
+      "id": "st_mw6fiweb16c219e5",
+      "name": "SVG hover 發光",
+      "css": ".rect-hover-glow {\n  fill: rgba(56, 189, 248, 0.05);\n  stroke: #475569;\n  stroke-width: 1.5;\n  cursor: pointer;\n  transition: fill 0.25s ease, stroke 0.25s ease, filter 0.25s ease;\n}\n.rect-hover-glow:hover {\n  fill: rgba(56, 189, 248, 0.18);\n  stroke: #38bdf8;\n  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));\n}",
+      "category": "svg",
       "tags": [
-        "極光",
-        "漸層",
-        "動態",
-        "深色"
+        "SVG",
+        "rect",
+        "hover",
+        "發光"
       ],
-      "description": "深藍夜色底上四團極光色暈（青綠、靛紫、翠綠、水藍）以 26–32 秒週期緩慢漂移變形，氣氛柔和不搶內容；偽元素已設 pointer-events:none。",
-      "previewHtml": "<div class=\"aurora-bg\" style=\"width:100%;max-width:320px;aspect-ratio:16/9;min-height:120px;border-radius:12px;border:1px solid rgba(129,140,248,.25)\"></div>",
-      "createdAt": "2026-11-07T11:59:23.440Z",
-      "updatedAt": "2026-11-07T11:59:23.440Z"
+      "description": "滑入時填色亮起並帶 drop-shadow 外光暈，適合可點擊的設備框。在詳情視窗的大預覽裡直接滑過即可看到效果。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect class=\"rect-hover-glow\" x=\"20\" y=\"16\" width=\"90\" height=\"80\" rx=\"8\"/>\n    <rect class=\"rect-hover-glow\" x=\"130\" y=\"16\" width=\"90\" height=\"36\" rx=\"6\"/>\n    <rect class=\"rect-hover-glow\" x=\"130\" y=\"60\" width=\"90\" height=\"36\" rx=\"6\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T13:18:37.955Z",
+      "updatedAt": "2026-11-07T13:18:37.955Z"
     }
   ]
 }
