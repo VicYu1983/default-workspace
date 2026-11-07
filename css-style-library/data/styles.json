@@ -2,6 +2,38 @@
   "schema_version": 1,
   "styles": [
     {
+      "id": "st_mw6jkhff08542f88",
+      "name": "SVG 框線繪製循環",
+      "css": ".rect-draw-loop {\n  fill: rgba(56, 189, 248, 0.05);\n  stroke: #38bdf8;\n  stroke-width: 2;\n  stroke-linejoin: round;\n  stroke-dasharray: 100;\n  stroke-dashoffset: 100;\n  opacity: 0;\n  animation: rect-draw-loop-run 4s ease-in-out infinite;\n}\n@keyframes rect-draw-loop-run {\n  0% { stroke-dashoffset: 100; opacity: 0; }\n  6% { opacity: 1; }\n  42% { stroke-dashoffset: 0; opacity: 1; }\n  70% { stroke-dashoffset: 0; opacity: 1; }\n  90% { opacity: 0; }\n  100% { stroke-dashoffset: 100; opacity: 0; }\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "rect",
+        "描邊",
+        "循環"
+      ],
+      "description": "框線繪製動畫的無限循環版：畫好→停留→淡出，在看不見時重置再重播，循環點無跳接。同樣需要 rect 加 pathLength=\"100\"。適合輪播看板與大屏循環演示。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <rect class=\"rect-draw-loop\" x=\"20\" y=\"16\" width=\"80\" height=\"80\" rx=\"8\" pathLength=\"100\"/>\n    <rect class=\"rect-draw-loop\" x=\"140\" y=\"16\" width=\"80\" height=\"40\" rx=\"8\" pathLength=\"100\" style=\"animation-delay:-1.2s\"/>\n    <rect class=\"rect-draw-loop\" x=\"140\" y=\"70\" width=\"80\" height=\"26\" rx=\"6\" pathLength=\"100\" style=\"animation-delay:-2.4s\"/>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:11:50.331Z",
+      "updatedAt": "2026-11-07T15:11:50.331Z"
+    },
+    {
+      "id": "st_mw6jdlawdbdb8cac",
+      "name": "SVG 漸層金屬字",
+      "css": ".svg-metal-text {\n  font: 800 24px/1 system-ui, sans-serif;\n  letter-spacing: 2px;\n  fill: url(#svg-metal-grad);\n}",
+      "category": "svg",
+      "tags": [
+        "SVG",
+        "text",
+        "漸層",
+        "標題"
+      ],
+      "description": "fill: url(#id) 把漸層灌進字形——金屬感標題。需在 markup 的 <defs> 放漸層定義（見示範），id 可自行替換；漸層用戶座標（gradientUnits=\"userSpaceOnUse\"）可精準控制縱向範圍。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <defs>\n      <linearGradient id=\"svg-metal-grad\" x1=\"0\" y1=\"20\" x2=\"0\" y2=\"60\" gradientUnits=\"userSpaceOnUse\">\n        <stop offset=\"0\" stop-color=\"#f1f5f9\"/>\n        <stop offset=\"0.55\" stop-color=\"#94a3b8\"/>\n        <stop offset=\"1\" stop-color=\"#475569\"/>\n      </linearGradient>\n    </defs>\n    <text x=\"120\" y=\"52\" text-anchor=\"middle\" class=\"svg-metal-text\">MONITORING</text>\n    <text x=\"120\" y=\"88\" text-anchor=\"middle\" font-size=\"11\" fill=\"#64748b\" letter-spacing=\"4\">CONTROL CENTER</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:06:28.760Z",
+      "updatedAt": "2026-11-07T15:06:28.760Z"
+    },
+    {
       "id": "st_mw6jdlau6409651c",
       "name": "SVG 等寬數值（右對齊）",
       "css": ".svg-value {\n  font: 600 15px/1 ui-monospace, SFMono-Regular, Consolas, monospace;\n  font-variant-numeric: tabular-nums;\n  text-anchor: end;\n  fill: #7dd3fc;\n}\n.svg-value-label {\n  font: 500 12px/1 system-ui, sans-serif;\n  text-anchor: start;\n  fill: #94a3b8;\n}",
@@ -540,20 +572,20 @@
       "updatedAt": "2026-11-07T11:27:16.893Z"
     },
     {
-      "id": "st_mw6jdlawdbdb8cac",
-      "name": "SVG 漸層金屬字",
-      "css": ".svg-metal-text {\n  font: 800 24px/1 system-ui, sans-serif;\n  letter-spacing: 2px;\n  fill: url(#svg-metal-grad);\n}",
+      "id": "st_mw6jkhfl78acec57",
+      "name": "SVG 打字機循環",
+      "css": ".svg-write-loop {\n  font: 700 22px/1 system-ui, sans-serif;\n  letter-spacing: 2px;\n  fill: rgba(125, 211, 252, 0);\n  stroke: #7dd3fc;\n  stroke-width: 1;\n  stroke-dasharray: 220;\n  stroke-dashoffset: 220;\n  opacity: 0;\n  animation: svg-write-loop-run 5s ease-in-out infinite;\n}\n@keyframes svg-write-loop-run {\n  0% { stroke-dashoffset: 220; fill: rgba(125, 211, 252, 0); opacity: 0; }\n  6% { opacity: 1; }\n  38% { stroke-dashoffset: 0; fill: rgba(125, 211, 252, 0); }\n  52% { fill: rgba(125, 211, 252, 0.95); opacity: 1; }\n  80% { stroke-dashoffset: 0; fill: rgba(125, 211, 252, 0.95); opacity: 1; }\n  92% { opacity: 0; }\n  100% { stroke-dashoffset: 220; fill: rgba(125, 211, 252, 0); opacity: 0; }\n}",
       "category": "svg",
       "tags": [
         "SVG",
         "text",
-        "漸層",
-        "標題"
+        "動畫",
+        "循環"
       ],
-      "description": "fill: url(#id) 把漸層灌進字形——金屬感標題。需在 markup 的 <defs> 放漸層定義（見示範），id 可自行替換；漸層用戶座標（gradientUnits=\"userSpaceOnUse\"）可精準控制縱向範圍。",
-      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <defs>\n      <linearGradient id=\"svg-metal-grad\" x1=\"0\" y1=\"20\" x2=\"0\" y2=\"60\" gradientUnits=\"userSpaceOnUse\">\n        <stop offset=\"0\" stop-color=\"#f1f5f9\"/>\n        <stop offset=\"0.55\" stop-color=\"#94a3b8\"/>\n        <stop offset=\"1\" stop-color=\"#475569\"/>\n      </linearGradient>\n    </defs>\n    <text x=\"120\" y=\"52\" text-anchor=\"middle\" class=\"svg-metal-text\">MONITORING</text>\n    <text x=\"120\" y=\"88\" text-anchor=\"middle\" font-size=\"11\" fill=\"#64748b\" letter-spacing=\"4\">CONTROL CENTER</text>\n  </svg>\n</div>",
-      "createdAt": "2026-11-07T15:06:28.760Z",
-      "updatedAt": "2026-11-07T15:06:28.760Z"
+      "description": "打字機寫字動畫的無限循環版：寫出→填充→停留→淡出→看不見時重置。把 draw 與 fill 合併成單一 keyframes 才能整體循環；dasharray 值隨字號調大（22px 約 220）。",
+      "previewHtml": "<div style=\"background:#0b1420;padding:14px;border-radius:12px\">\n  <svg width=\"100%\" height=\"112\" viewBox=\"0 0 240 112\">\n    <text x=\"120\" y=\"50\" text-anchor=\"middle\" class=\"svg-write-loop\">SMART BUILDING</text>\n    <text x=\"120\" y=\"88\" text-anchor=\"middle\" class=\"svg-write-loop\" style=\"animation-delay:-2.5s\">智慧監控中心</text>\n  </svg>\n</div>",
+      "createdAt": "2026-11-07T15:11:50.337Z",
+      "updatedAt": "2026-11-07T15:11:50.337Z"
     }
   ]
 }
